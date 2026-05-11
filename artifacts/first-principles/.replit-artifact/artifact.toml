@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FirstPrinciples Explorer"
+version = "1.0.0"
+id = "artifacts/first-principles"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21405
+
+[services.development]
+run = "pnpm --filter @workspace/first-principles run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/first-principles", "run", "build" ]
+publicDir = "artifacts/first-principles/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21405"
+BASE_PATH = "/"

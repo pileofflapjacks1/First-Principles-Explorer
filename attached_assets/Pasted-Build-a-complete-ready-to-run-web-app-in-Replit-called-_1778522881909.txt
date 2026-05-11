@@ -1,0 +1,67 @@
+Build a complete, ready-to-run web app in Replit called "FirstPrinciples Explorer".
+
+Core purpose (never deviate):
+Users type any topic or question (example: "How does a transistor work", "How is a lithium-ion battery manufactured", "How does photosynthesis work"). 
+The app instantly returns:
+1. A hierarchical first-principles breakdown (from raw fundamentals upward).
+2. An interactive Mermaid flowchart showing the entire flow.
+3. A dedicated "Gaps & Innovation Opportunities" section with 3–5 concrete gaps.
+4. For each gap, a one-click "Find Companies" button that opens relevant company search results.
+
+Technical stack — use exactly this:
+- Single index.html file (vanilla HTML + JS preferred for speed).
+- Tailwind CSS via CDN[](https://cdn.tailwindcss.com).
+- Mermaid.js via CDN for diagrams.
+- Vanilla JavaScript + Fetch.
+- xAI Grok API[](https://api.x.ai/v1/chat/completions) with model "grok-4.3". 
+  User will provide their XAI_API_KEY via a simple input field on first load and it is stored ONLY in browser localStorage — clearly warn the user about this and tell them to get the key from https://console.x.ai.
+
+App layout (mobile-friendly, clean, dark mode by default):
+- Top navbar: logo "FirstPrinciples Explorer" + "New Breakdown" button.
+- Hero / Input area (centered, full height until result): large textarea, example prompts as chips below it, big "Break It Down from First Principles" button.
+- After generation: split view
+  - Left panel (60%): 
+    - "Hierarchical Breakdown" — accordion cards (Level 1: Fundamentals → Level 2: Components → … → Final Topic).
+    - Each card shows title, concise explanation, and bullet list of sub-components.
+  - Right panel (40%): 
+    - "Flow Diagram" — rendered Mermaid flowchart (use flowchart TD syntax). Make nodes clickable so clicking a node scrolls to and expands the matching breakdown card.
+- Bottom full-width section: "Gaps & Innovation Opportunities"
+  - 3–5 cards, each with: gap title, why it exists, innovation potential (1–2 sentences).
+  - Each card has a blue button "Find Companies Working on This Gap".
+- Footer with "Export as JSON" and "Share link" (simple copy-to-clipboard for MVP).
+
+Exact JSON schema the LLM must return (force this with a system prompt):
+{
+  "topic": "string",
+  "breakdown": [
+    {
+      "level": number,
+      "title": "string",
+      "description": "string (2–4 sentences)",
+      "components": ["string", "string"]
+    }
+  ],
+  "mermaid_flowchart": "string (valid Mermaid flowchart TD syntax, start from fundamentals on left, end with the topic on right, use clear labels)",
+  "gaps": [
+    {
+      "gap_title": "string",
+      "why_exists": "string",
+      "innovation_potential": "string",
+      "search_query": "string (optimized Google-style query for companies, e.g. 'companies developing 2D transistor materials 2025')"
+    }
+  ]
+}
+
+Strong system prompt to use for every generation (copy this verbatim into your code):
+"You are a world-class first-principles thinker and systems engineer. Break the user's topic down from absolute fundamentals (physics, chemistry, raw materials, or first logical atoms) upward in clear hierarchical layers. Never skip steps. Output ONLY valid JSON matching the schema exactly. Use precise technical language but keep descriptions understandable to a smart high-school student. For the mermaid_flowchart, make it a clean left-to-right flowchart with 6–10 nodes maximum."
+
+Behavior requirements:
+- Show a clean loading animation (spinning atoms or similar) while calling the API.
+- If XAI_API_KEY is missing, show a modal asking the user to paste their xAI Grok API key (from https://console.x.ai) and save it to localStorage.
+- On "Find Companies" click: open a new tab with Google search using the exact search_query from the JSON + " startup OR company OR venture" appended.
+- Add a small "Regenerate Gaps" button that calls the LLM again only for new gaps (keep the breakdown fixed).
+- Make the flowchart interactive with Mermaid's built-in click handlers to highlight/scroll to cards.
+- Add one example pre-loaded breakdown (transistor) so user can instantly see it working.
+- Responsive design, beautiful typography, subtle animations (Tailwind transitions).
+- Error handling and friendly messages.
+- Include a README.md in the Replit with instructions: "1. Go to https://console.x.ai and create an API key. 2. Paste your XAI_API_KEY when the app asks. 3. This is a client-side MVP
