@@ -166,6 +166,23 @@
   stroke-width: 1.5px !important;
 }
 
+/* Gap / innovation opportunity node highlighting */
+.mermaid .node.gapNode rect,
+.mermaid .node.gapNode circle,
+.mermaid .node.gapNode ellipse,
+.mermaid .node.gapNode polygon,
+.mermaid .node.gapNode path {
+  fill: #2d1500 !important;
+  stroke: #f59e0b !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.4));
+}
+
+.mermaid .node.gapNode text,
+.mermaid .node.gapNode .label {
+  fill: #fcd34d !important;
+}
+
 .mermaid .node.clickable {
   cursor: pointer !important;
 }
@@ -173,6 +190,11 @@
 .mermaid .node.clickable:hover rect,
 .mermaid .node.clickable:hover circle {
   fill: hsl(216 34% 17%) !important;
+}
+
+.mermaid .node.gapNode.clickable:hover rect,
+.mermaid .node.gapNode.clickable:hover circle {
+  fill: #3d2000 !important;
 }
 
 .mermaid .edgePath .path {

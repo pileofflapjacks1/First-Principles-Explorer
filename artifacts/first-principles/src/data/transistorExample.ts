@@ -58,6 +58,7 @@ export const TRANSISTOR_EXAMPLE = {
     E --> F[MOSFET\nStructure]
     F --> G[Channel\nSwitching]
     G --> H[Transistor\nOperation]`,
+  gap_nodes: ["A", "C", "F", "G", "H"],
   gaps: [
     {
       gap_title: "Sub-1nm Gate Oxide Leakage",

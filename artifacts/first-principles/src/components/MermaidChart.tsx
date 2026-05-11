@@ -31,10 +31,21 @@ let chartCounter = 0;
 
 interface MermaidChartProps {
   chart: string;
+  gapNodes?: string[];
   onNodeClick?: (nodeId: string) => void;
 }
 
-export function MermaidChart({ chart, onNodeClick }: MermaidChartProps) {
+function injectGapStyling(chart: string, gapNodes: string[]): string {
+  if (!gapNodes.length) return chart;
+
+  const classDef = `classDef gapNode fill:#2d1f00,stroke:#f59e0b,stroke-width:2px,color:#fcd34d`;
+  const classLine = `class ${gapNodes.join(",")} gapNode`;
+
+  // Strip trailing whitespace and append
+  return chart.trimEnd() + "\n" + classDef + "\n" + classLine;
+}
+
+export function MermaidChart({ chart, gapNodes = [], onNodeClick }: MermaidChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,16 +66,19 @@ export function MermaidChart({ chart, onNodeClick }: MermaidChartProps) {
           .replace(/```\s*$/i, "")
           .trim();
 
-        const { svg } = await mermaid.render(id, sanitized);
+        const withGaps = injectGapStyling(sanitized, gapNodes);
+
+        const { svg } = await mermaid.render(id, withGaps);
 
         if (containerRef.current) {
           containerRef.current.innerHTML = svg;
 
-          if (onNodeClick) {
-            const svgEl = containerRef.current.querySelector("svg");
-            if (svgEl) {
-              svgEl.style.maxWidth = "100%";
-              svgEl.style.height = "auto";
+          const svgEl = containerRef.current.querySelector("svg");
+          if (svgEl) {
+            svgEl.style.maxWidth = "100%";
+            svgEl.style.height = "auto";
+
+            if (onNodeClick) {
               const nodes = svgEl.querySelectorAll(".node");
               nodes.forEach((node) => {
                 (node as HTMLElement).style.cursor = "pointer";
@@ -86,7 +100,7 @@ export function MermaidChart({ chart, onNodeClick }: MermaidChartProps) {
     };
 
     render();
-  }, [chart, onNodeClick]);
+  }, [chart, gapNodes, onNodeClick]);
 
   if (error) {
     return (
@@ -108,7 +122,7 @@ export function MermaidChart({ chart, onNodeClick }: MermaidChartProps) {
       )}
       <div
         ref={containerRef}
-        className={`overflow-auto ${isLoading ? "hidden" : ""}`}
+        className={`mermaid overflow-auto ${isLoading ? "hidden" : ""}`}
         style={{ minHeight: "120px" }}
       />
     </div>

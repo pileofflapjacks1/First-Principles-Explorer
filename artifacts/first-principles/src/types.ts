@@ -16,5 +16,6 @@ export interface BreakdownResult {
   topic: string;
   breakdown: BreakdownLevel[];
   mermaid_flowchart: string;
+  gap_nodes: string[];
   gaps: Gap[];
 }

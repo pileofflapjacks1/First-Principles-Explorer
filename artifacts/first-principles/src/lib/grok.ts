@@ -14,6 +14,7 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
     }
   ],
   "mermaid_flowchart": "string (valid Mermaid flowchart LR syntax, 6-10 nodes)",
+  "gap_nodes": ["string"] (array of node IDs from the mermaid_flowchart — the exact single-letter or short IDs like "A", "B", "C" — that correspond to areas where innovation gaps exist. Include 2-4 node IDs.),
   "gaps": [
     {
       "gap_title": "string",
