@@ -1,0 +1,246 @@
+import express, { Router, type IRouter, type Request, type Response } from "express";
+import { eq } from "drizzle-orm";
+import type Stripe from "stripe";
+import { db, usersTable } from "@workspace/db";
+import { requireAuth } from "../middlewares/auth";
+import { getStripeSync, getUncachableStripeClient } from "../lib/stripeClient";
+
+const PRO_PRICE_AMOUNT_CENTS = 1200;
+const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
+
+// Statuses that grant Pro access. `past_due`, `unpaid`, `incomplete`,
+// `incomplete_expired`, `canceled`, and `paused` all revoke access — payment
+// failure must immediately downgrade the user.
+const ACTIVE_STATUSES = new Set(["active", "trialing"]);
+
+async function getProPriceId(): Promise<string> {
+  const stripe = await getUncachableStripeClient();
+  // Idempotently locate or create the $12/mo Pro price.
+  const products = await stripe.products.search({
+    query: `name:'${PRO_PRODUCT_NAME}' AND active:'true'`,
+  });
+  let product = products.data[0];
+  if (!product) {
+    product = await stripe.products.create({
+      name: PRO_PRODUCT_NAME,
+      description: "Server-hosted Grok Imagine visuals + 100 images/month",
+    });
+  }
+  const prices = await stripe.prices.list({
+    product: product.id,
+    active: true,
+    limit: 100,
+  });
+  const existing = prices.data.find(
+    (p) =>
+      p.unit_amount === PRO_PRICE_AMOUNT_CENTS &&
+      p.currency === "usd" &&
+      p.recurring?.interval === "month",
+  );
+  if (existing) return existing.id;
+  const price = await stripe.prices.create({
+    product: product.id,
+    unit_amount: PRO_PRICE_AMOUNT_CENTS,
+    currency: "usd",
+    recurring: { interval: "month" },
+  });
+  return price.id;
+}
+
+function originFromRequest(req: Request): string {
+  const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
+  const host = (req.headers["x-forwarded-host"] as string) || req.get("host");
+  return `${proto}://${host}`;
+}
+
+const router: IRouter = Router();
+
+// Webhook MUST be registered before express.json() — see app.ts
+export const stripeWebhookRouter: IRouter = Router();
+stripeWebhookRouter.post(
+  "/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  async (req, res): Promise<void> => {
+    const signature = req.headers["stripe-signature"];
+    if (!signature) {
+      res.status(400).json({ error: "Missing signature" });
+      return;
+    }
+    const sig = Array.isArray(signature) ? signature[0] : signature;
+    try {
+      const stripeSync = await getStripeSync();
+      await stripeSync.processWebhook(req.body as Buffer, sig);
+    } catch (err) {
+      req.log.error({ err }, "Stripe webhook verification/sync failed");
+      res.status(400).json({ error: "Webhook processing failed" });
+      return;
+    }
+
+    // Signature was verified by processWebhook above; safe to parse the body.
+    // If applying the event to our users table fails, return 5xx so Stripe
+    // retries — otherwise entitlement state can drift permanently.
+    try {
+      const event = JSON.parse((req.body as Buffer).toString("utf8")) as Stripe.Event;
+      await applyEventToUsers(event, req.log);
+    } catch (err) {
+      req.log.error({ err }, "Failed to apply Stripe event to users table");
+      res.status(500).json({ error: "Failed to apply event" });
+      return;
+    }
+    res.status(200).json({ received: true });
+  },
+);
+
+async function applyEventToUsers(
+  event: Stripe.Event,
+  log: { info: (...a: unknown[]) => void; warn: (...a: unknown[]) => void },
+): Promise<void> {
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.client_reference_id ?? session.metadata?.["userId"];
+      const customerId =
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id;
+      const subscriptionId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id;
+      if (!userId) {
+        log.warn({ sessionId: session.id }, "checkout.session.completed missing userId");
+        return;
+      }
+      await db
+        .update(usersTable)
+        .set({
+          stripeCustomerId: customerId ?? null,
+          stripeSubscriptionId: subscriptionId ?? null,
+          subscriptionStatus: "active",
+          isPro: true,
+        })
+        .where(eq(usersTable.id, userId));
+      return;
+    }
+    case "customer.subscription.created":
+    case "customer.subscription.updated":
+    case "customer.subscription.deleted": {
+      const sub = event.data.object as Stripe.Subscription;
+      const customerId =
+        typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      const status =
+        event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
+      const isPro =
+        event.type !== "customer.subscription.deleted" &&
+        ACTIVE_STATUSES.has(sub.status);
+      const [user] = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.stripeCustomerId, customerId));
+      if (!user) {
+        log.warn({ customerId }, "No user mapped to Stripe customer");
+        return;
+      }
+      await db
+        .update(usersTable)
+        .set({
+          stripeSubscriptionId: sub.id,
+          subscriptionStatus: status,
+          isPro,
+        })
+        .where(eq(usersTable.id, user.id));
+      return;
+    }
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice;
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+      if (!customerId) return;
+      await db
+        .update(usersTable)
+        .set({ isPro: false, subscriptionStatus: "past_due" })
+        .where(eq(usersTable.stripeCustomerId, customerId));
+      return;
+    }
+    default:
+      return;
+  }
+}
+
+router.post(
+  "/stripe/checkout",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = req.userId!;
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    try {
+      const stripe = await getUncachableStripeClient();
+      const priceId = await getProPriceId();
+      const origin = originFromRequest(req);
+
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: `${origin}/pricing?checkout=success`,
+        cancel_url: `${origin}/pricing?checkout=cancelled`,
+        client_reference_id: userId,
+        metadata: { userId },
+        allow_promotion_codes: true,
+      };
+      if (user.stripeCustomerId) {
+        sessionParams.customer = user.stripeCustomerId;
+      } else if (user.email) {
+        sessionParams.customer_email = user.email;
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      if (!session.url) {
+        res.status(502).json({ error: "Stripe did not return a checkout URL" });
+        return;
+      }
+      res.json({ url: session.url });
+    } catch (err) {
+      req.log.error({ err }, "Failed to create Stripe checkout session");
+      res.status(502).json({ error: "Failed to create checkout session" });
+    }
+  },
+);
+
+router.post(
+  "/stripe/portal",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = req.userId!;
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    if (!user?.stripeCustomerId) {
+      res.status(404).json({ error: "No Stripe customer for this account" });
+      return;
+    }
+    try {
+      const stripe = await getUncachableStripeClient();
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${originFromRequest(req)}/pricing`,
+      });
+      res.json({ url: session.url });
+    } catch (err) {
+      req.log.error({ err }, "Failed to create Stripe billing portal session");
+      res.status(502).json({ error: "Failed to open billing portal" });
+    }
+  },
+);
+
+export default router;

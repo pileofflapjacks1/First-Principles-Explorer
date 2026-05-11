@@ -27,3 +27,7 @@ export interface GeneratedImage {
   url: string;
   imagesGeneratedThisMonth: number;
 }
+
+export interface StripeRedirect {
+  url: string;
+}

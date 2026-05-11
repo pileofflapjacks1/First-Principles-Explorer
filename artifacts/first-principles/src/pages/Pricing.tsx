@@ -1,12 +1,45 @@
-import { Atom, Check, Sparkles, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Atom, Check, Sparkles, ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { useUser } from "@clerk/react";
-import { useGetMe } from "@workspace/api-client-react";
+import {
+  useGetMe,
+  useCreateStripeCheckoutSession,
+  useCreateStripePortalSession,
+} from "@workspace/api-client-react";
 
 export function Pricing() {
   const { user } = useUser();
   const { data: account } = useGetMe();
   const isPro = account?.isPro ?? false;
+  const [error, setError] = useState<string | null>(null);
+
+  const checkoutMutation = useCreateStripeCheckoutSession({
+    mutation: {
+      onSuccess: (data) => {
+        window.location.href = data.url;
+      },
+      onError: () => {
+        setError(
+          "We couldn't start checkout. Please try again in a moment.",
+        );
+      },
+    },
+  });
+
+  const portalMutation = useCreateStripePortalSession({
+    mutation: {
+      onSuccess: (data) => {
+        window.location.href = data.url;
+      },
+      onError: () => {
+        setError("We couldn't open the billing portal. Please try again.");
+      },
+    },
+  });
+
+  const checkoutPending = checkoutMutation.isPending;
+  const portalPending = portalMutation.isPending;
 
   return (
     <div className="min-h-screen bg-[hsl(224_71%_4%)] text-[hsl(213_31%_91%)]">
@@ -96,24 +129,52 @@ export function Pricing() {
             </ul>
 
             {isPro ? (
-              <div className="w-full text-center py-3 rounded-xl bg-[hsl(160_60%_45%/0.15)] text-[hsl(160_60%_70%)] text-sm font-semibold border border-[hsl(160_60%_45%/0.3)]">
-                You're on Pro — thanks!
+              <div className="space-y-2">
+                <div className="w-full text-center py-3 rounded-xl bg-[hsl(160_60%_45%/0.15)] text-[hsl(160_60%_70%)] text-sm font-semibold border border-[hsl(160_60%_45%/0.3)]">
+                  You're on Pro — thanks!
+                </div>
+                <button
+                  type="button"
+                  disabled={portalPending}
+                  onClick={() => {
+                    setError(null);
+                    portalMutation.mutate();
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(224_71%_10%)] text-sm font-semibold transition-colors disabled:opacity-60"
+                >
+                  {portalPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Manage subscription
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <a
-                  href={`mailto:founder@firstprinciples.app?subject=Pro%20access%20request&body=Hi%2C%20I'd%20like%20Pro%20access.%20My%20account%20email%20is%20${encodeURIComponent(
-                    user?.primaryEmailAddress?.emailAddress ?? "",
-                  )}.`}
-                  className="block w-full text-center py-3 rounded-xl bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors"
+                <button
+                  type="button"
+                  disabled={checkoutPending}
+                  onClick={() => {
+                    setError(null);
+                    checkoutMutation.mutate();
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
                 >
-                  Request Pro access
-                </a>
+                  {checkoutPending && (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  )}
+                  Upgrade to Pro
+                </button>
                 <p className="text-[10px] text-[hsl(215.4_16.3%_46.9%)] text-center">
-                  Self-serve checkout coming soon. For now, request access and
-                  we'll flip your account on within a day.
+                  Secure checkout via Stripe. Cancel anytime from your billing
+                  portal.
                 </p>
               </div>
+            )}
+
+            {error && (
+              <p className="text-xs text-[hsl(0_85%_70%)] text-center">
+                {error}
+              </p>
             )}
           </div>
         </div>

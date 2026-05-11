@@ -21,6 +21,7 @@ import type {
   GeneratedImage,
   HealthStatus,
   ImageInput,
+  StripeRedirect,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -255,4 +256,166 @@ export const useGenerateProImage = <
   TContext
 > => {
   return useMutation(getGenerateProImageMutationOptions(options));
+};
+
+/**
+ * @summary Create a Stripe Checkout session for the Pro subscription
+ */
+export const getCreateStripeCheckoutSessionUrl = () => {
+  return `/api/stripe/checkout`;
+};
+
+export const createStripeCheckoutSession = async (
+  options?: RequestInit,
+): Promise<StripeRedirect> => {
+  return customFetch<StripeRedirect>(getCreateStripeCheckoutSessionUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCreateStripeCheckoutSessionMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripeCheckoutSession>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStripeCheckoutSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["createStripeCheckoutSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStripeCheckoutSession>>,
+    void
+  > = () => {
+    return createStripeCheckoutSession(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStripeCheckoutSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStripeCheckoutSession>>
+>;
+
+export type CreateStripeCheckoutSessionMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a Stripe Checkout session for the Pro subscription
+ */
+export const useCreateStripeCheckoutSession = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripeCheckoutSession>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStripeCheckoutSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getCreateStripeCheckoutSessionMutationOptions(options));
+};
+
+/**
+ * @summary Create a Stripe Billing Portal session for the current user
+ */
+export const getCreateStripePortalSessionUrl = () => {
+  return `/api/stripe/portal`;
+};
+
+export const createStripePortalSession = async (
+  options?: RequestInit,
+): Promise<StripeRedirect> => {
+  return customFetch<StripeRedirect>(getCreateStripePortalSessionUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCreateStripePortalSessionMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripePortalSession>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStripePortalSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["createStripePortalSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStripePortalSession>>,
+    void
+  > = () => {
+    return createStripePortalSession(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStripePortalSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStripePortalSession>>
+>;
+
+export type CreateStripePortalSessionMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a Stripe Billing Portal session for the current user
+ */
+export const useCreateStripePortalSession = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripePortalSession>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStripePortalSession>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getCreateStripePortalSessionMutationOptions(options));
 };

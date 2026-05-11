@@ -38,3 +38,17 @@ export const GenerateProImageResponse = zod.object({
   url: zod.string(),
   imagesGeneratedThisMonth: zod.number(),
 });
+
+/**
+ * @summary Create a Stripe Checkout session for the Pro subscription
+ */
+export const CreateStripeCheckoutSessionResponse = zod.object({
+  url: zod.string(),
+});
+
+/**
+ * @summary Create a Stripe Billing Portal session for the current user
+ */
+export const CreateStripePortalSessionResponse = zod.object({
+  url: zod.string(),
+});
