@@ -40,6 +40,32 @@ export const GenerateProImageResponse = zod.object({
 });
 
 /**
+ * @summary Generate a first-principles breakdown for a topic (Pro tier required)
+ */
+
+export const GenerateProBreakdownBody = zod.object({
+  topic: zod.string().min(1),
+});
+
+export const GenerateProBreakdownResponse = zod.record(
+  zod.string(),
+  zod.unknown(),
+);
+
+/**
+ * @summary Regenerate the innovation gaps for a topic (Pro tier required)
+ */
+
+export const RegenerateProGapsBody = zod.object({
+  topic: zod.string().min(1),
+  breakdownTitles: zod.array(zod.string()),
+});
+
+export const RegenerateProGapsResponse = zod.object({
+  gaps: zod.array(zod.record(zod.string(), zod.unknown())),
+});
+
+/**
  * @summary Create a Stripe Checkout session for the Pro subscription
  */
 export const createStripeCheckoutSessionBodyIntervalDefault = `month`;

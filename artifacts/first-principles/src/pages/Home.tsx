@@ -21,7 +21,11 @@ import { getGetMeQueryOptions } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import type { BreakdownResult, ImageEntry } from "../types";
 import { generateBreakdown, regenerateGaps } from "../lib/grok";
-import { generateImageOnServer } from "../lib/api";
+import {
+  generateImageOnServer,
+  generateBreakdownOnServer,
+  regenerateGapsOnServer,
+} from "../lib/api";
 import { TRANSISTOR_EXAMPLE } from "../data/transistorExample";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { AtomSpinner } from "../components/AtomSpinner";
@@ -171,7 +175,7 @@ export function Home() {
     const topic = (customPrompt ?? prompt).trim();
     if (!topic) return;
 
-    if (!apiKey) {
+    if (!isPro && !apiKey) {
       setShowApiModal(true);
       return;
     }
@@ -184,7 +188,9 @@ export function Home() {
     generationRef.current++;
 
     try {
-      const data = await generateBreakdown(topic, apiKey);
+      const data = isPro
+        ? await generateBreakdownOnServer(topic)
+        : await generateBreakdown(topic, apiKey);
       setResult(data);
       if (canGenerateImages) {
         void generateAllImages(data);
@@ -197,10 +203,18 @@ export function Home() {
   }
 
   async function handleRegenerateGaps() {
-    if (!result || !apiKey) return;
+    if (!result) return;
+    if (!isPro && !apiKey) return;
     setLoadingGaps(true);
     try {
-      const gaps = await regenerateGaps(result.topic, result.breakdown, apiKey);
+      const gaps = isPro
+        ? (
+            await regenerateGapsOnServer(
+              result.topic,
+              result.breakdown.map((b) => b.title),
+            )
+          ).gaps
+        : await regenerateGaps(result.topic, result.breakdown, apiKey);
       const newResult = { ...result, gaps };
       setResult(newResult);
 

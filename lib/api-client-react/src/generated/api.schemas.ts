@@ -32,6 +32,17 @@ export interface StripeRedirect {
   url: string;
 }
 
+export interface BreakdownInput {
+  /** @minLength 1 */
+  topic: string;
+}
+
+export interface GapsInput {
+  /** @minLength 1 */
+  topic: string;
+  breakdownTitles: string[];
+}
+
 export type StripeCheckoutRequestInterval =
   (typeof StripeCheckoutRequestInterval)[keyof typeof StripeCheckoutRequestInterval];
 
@@ -43,3 +54,12 @@ export const StripeCheckoutRequestInterval = {
 export interface StripeCheckoutRequest {
   interval?: StripeCheckoutRequestInterval;
 }
+
+export type GenerateProBreakdown200 = { [key: string]: unknown };
+
+export type RegenerateProGaps200GapsItem = { [key: string]: unknown };
+
+export type RegenerateProGaps200 = {
+  gaps: RegenerateProGaps200GapsItem[];
+  [key: string]: unknown;
+};

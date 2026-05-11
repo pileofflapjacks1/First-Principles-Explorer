@@ -7,9 +7,14 @@
  */
 
 export * from "./account";
+export * from "./breakdownInput";
+export * from "./gapsInput";
 export * from "./generatedImage";
+export * from "./generateProBreakdown200";
 export * from "./healthStatus";
 export * from "./imageInput";
+export * from "./regenerateProGaps200";
+export * from "./regenerateProGaps200GapsItem";
 export * from "./stripeCheckoutRequest";
 export * from "./stripeCheckoutRequestInterval";
 export * from "./stripeRedirect";

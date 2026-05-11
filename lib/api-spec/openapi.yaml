@@ -16,6 +16,8 @@ tags:
     description: Server-side image generation (Pro tier)
   - name: stripe
     description: Stripe checkout & customer portal
+  - name: breakdown
+    description: Server-side first-principles breakdown (Pro tier)
 paths:
   /healthz:
     get:
@@ -68,6 +70,63 @@ paths:
           description: Pro tier required
         "429":
           description: Monthly image limit reached
+  /breakdown:
+    post:
+      operationId: generateProBreakdown
+      tags: [breakdown]
+      summary: Generate a first-principles breakdown for a topic (Pro tier required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BreakdownInput"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401":
+          description: Unauthorized
+        "402":
+          description: Pro tier required
+        "502":
+          description: Upstream model error
+  /breakdown/gaps:
+    post:
+      operationId: regenerateProGaps
+      tags: [breakdown]
+      summary: Regenerate the innovation gaps for a topic (Pro tier required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GapsInput"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                required: [gaps]
+                properties:
+                  gaps:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "401":
+          description: Unauthorized
+        "402":
+          description: Pro tier required
+        "502":
+          description: Upstream model error
   /stripe/checkout:
     post:
       operationId: createStripeCheckoutSession
@@ -156,6 +215,24 @@ components:
       properties:
         url:
           type: string
+    BreakdownInput:
+      type: object
+      required: [topic]
+      properties:
+        topic:
+          type: string
+          minLength: 1
+    GapsInput:
+      type: object
+      required: [topic, breakdownTitles]
+      properties:
+        topic:
+          type: string
+          minLength: 1
+        breakdownTitles:
+          type: array
+          items:
+            type: string
     StripeCheckoutRequest:
       type: object
       properties:

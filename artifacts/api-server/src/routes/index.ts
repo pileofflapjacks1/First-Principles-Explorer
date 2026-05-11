@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import meRouter from "./me";
 import imagesRouter from "./images";
+import breakdownRouter from "./breakdown";
 import stripeRouter from "./stripe";
 
 const router: IRouter = Router();
@@ -9,6 +10,7 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(meRouter);
 router.use(imagesRouter);
+router.use(breakdownRouter);
 router.use(stripeRouter);
 
 export default router;

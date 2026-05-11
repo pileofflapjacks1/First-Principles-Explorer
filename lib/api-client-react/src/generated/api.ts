@@ -18,9 +18,13 @@ import type {
 
 import type {
   Account,
+  BreakdownInput,
+  GapsInput,
+  GenerateProBreakdown200,
   GeneratedImage,
   HealthStatus,
   ImageInput,
+  RegenerateProGaps200,
   StripeCheckoutRequest,
   StripeRedirect,
 } from "./api.schemas";
@@ -257,6 +261,178 @@ export const useGenerateProImage = <
   TContext
 > => {
   return useMutation(getGenerateProImageMutationOptions(options));
+};
+
+/**
+ * @summary Generate a first-principles breakdown for a topic (Pro tier required)
+ */
+export const getGenerateProBreakdownUrl = () => {
+  return `/api/breakdown`;
+};
+
+export const generateProBreakdown = async (
+  breakdownInput: BreakdownInput,
+  options?: RequestInit,
+): Promise<GenerateProBreakdown200> => {
+  return customFetch<GenerateProBreakdown200>(getGenerateProBreakdownUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(breakdownInput),
+  });
+};
+
+export const getGenerateProBreakdownMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateProBreakdown>>,
+    TError,
+    { data: BodyType<BreakdownInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateProBreakdown>>,
+  TError,
+  { data: BodyType<BreakdownInput> },
+  TContext
+> => {
+  const mutationKey = ["generateProBreakdown"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateProBreakdown>>,
+    { data: BodyType<BreakdownInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateProBreakdown(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateProBreakdownMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateProBreakdown>>
+>;
+export type GenerateProBreakdownMutationBody = BodyType<BreakdownInput>;
+export type GenerateProBreakdownMutationError = ErrorType<void>;
+
+/**
+ * @summary Generate a first-principles breakdown for a topic (Pro tier required)
+ */
+export const useGenerateProBreakdown = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateProBreakdown>>,
+    TError,
+    { data: BodyType<BreakdownInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateProBreakdown>>,
+  TError,
+  { data: BodyType<BreakdownInput> },
+  TContext
+> => {
+  return useMutation(getGenerateProBreakdownMutationOptions(options));
+};
+
+/**
+ * @summary Regenerate the innovation gaps for a topic (Pro tier required)
+ */
+export const getRegenerateProGapsUrl = () => {
+  return `/api/breakdown/gaps`;
+};
+
+export const regenerateProGaps = async (
+  gapsInput: GapsInput,
+  options?: RequestInit,
+): Promise<RegenerateProGaps200> => {
+  return customFetch<RegenerateProGaps200>(getRegenerateProGapsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(gapsInput),
+  });
+};
+
+export const getRegenerateProGapsMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateProGaps>>,
+    TError,
+    { data: BodyType<GapsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof regenerateProGaps>>,
+  TError,
+  { data: BodyType<GapsInput> },
+  TContext
+> => {
+  const mutationKey = ["regenerateProGaps"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof regenerateProGaps>>,
+    { data: BodyType<GapsInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return regenerateProGaps(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegenerateProGapsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof regenerateProGaps>>
+>;
+export type RegenerateProGapsMutationBody = BodyType<GapsInput>;
+export type RegenerateProGapsMutationError = ErrorType<void>;
+
+/**
+ * @summary Regenerate the innovation gaps for a topic (Pro tier required)
+ */
+export const useRegenerateProGaps = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof regenerateProGaps>>,
+    TError,
+    { data: BodyType<GapsInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof regenerateProGaps>>,
+  TError,
+  { data: BodyType<GapsInput> },
+  TContext
+> => {
+  return useMutation(getRegenerateProGapsMutationOptions(options));
 };
 
 /**
