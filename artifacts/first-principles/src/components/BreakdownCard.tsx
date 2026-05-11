@@ -71,7 +71,7 @@ export function BreakdownCard({ item, isActive, defaultOpen, id }: BreakdownCard
               <div className="flex items-center gap-1.5 mb-1.5">
                 <BookOpen className="w-3 h-3 text-[hsl(215.4_16.3%_46.9%)]" />
                 <span className="text-[10px] font-semibold text-[hsl(215.4_16.3%_46.9%)] uppercase tracking-wider">
-                  Further Reading
+                  Learn More on Grokipedia
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5">

@@ -13,10 +13,10 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
       "components": ["string", "string"],
       "wiki_links": [
         {
-          "title": "string (short Wikipedia article title)",
-          "url": "string (full https://en.wikipedia.org/wiki/... URL)"
+          "title": "string (short descriptive label for the concept)",
+          "url": "string (Grokipedia search URL in the format: https://grokipedia.com/page/grokipedia-search?q=SEARCH+TERMS where SEARCH+TERMS is the concept URL-encoded)"
         }
-      ] (2-3 real Wikipedia article URLs most relevant to this specific level — use exact article titles as they appear on Wikipedia, verify the slug is correct)
+      ] (2-3 Grokipedia search links for concepts most relevant to this level — encode spaces as + in the query string)
     }
   ],
   "mermaid_flowchart": "string (valid Mermaid flowchart LR syntax, 6-10 nodes)",
