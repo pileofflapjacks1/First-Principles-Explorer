@@ -27,21 +27,33 @@ export async function requireAuth(
   // Look up email so admins can identify users when flipping the `is_pro` flag.
   // Failure to fetch must not block the request — fall back to id-only upsert.
   let email: string | null = null;
+  let emailFetched = false;
   try {
     const clerkUser = await clerkClient.users.getUser(userId);
     email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
+    emailFetched = true;
   } catch (err) {
     req.log.warn({ err, userId }, "Failed to fetch Clerk user for email sync");
   }
 
-  await db
-    .insert(usersTable)
-    .values({ id: userId, email })
-    .onConflictDoUpdate({
-      target: usersTable.id,
-      // Only refresh email — never overwrite isPro / counters here.
-      set: { email },
-    });
+  // On insert always set whatever we have (may be null). On conflict only
+  // overwrite email when we successfully fetched a non-null value, so a
+  // transient Clerk fetch failure can't wipe a previously-stored email.
+  if (emailFetched && email !== null) {
+    await db
+      .insert(usersTable)
+      .values({ id: userId, email })
+      .onConflictDoUpdate({
+        target: usersTable.id,
+        // Only refresh email — never overwrite isPro / counters here.
+        set: { email },
+      });
+  } else {
+    await db
+      .insert(usersTable)
+      .values({ id: userId, email })
+      .onConflictDoNothing({ target: usersTable.id });
+  }
 
   req.userId = userId;
   next();
