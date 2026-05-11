@@ -20,7 +20,15 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
       "gap_title": "string",
       "why_exists": "string",
       "innovation_potential": "string",
-      "search_query": "string"
+      "search_query": "string",
+      "public_companies": [
+        {
+          "name": "string (full company name)",
+          "ticker": "string (stock ticker symbol)",
+          "exchange": "string (e.g. NASDAQ, NYSE, TSX, LSE)",
+          "relevance": "string (1 sentence: how this company is specifically involved in or positioned for this gap)"
+        }
+      ] (2-4 real publicly traded companies that are actively working on or positioned to benefit from this specific gap. Only include companies with verified stock tickers.)
     }
   ]
 }`;
@@ -104,7 +112,7 @@ export async function regenerateGaps(
         },
         {
           role: "user",
-          content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdown.map((b) => b.title).join(", ")}\n\nReturn ONLY a JSON array:\n[\n  {\n    "gap_title": "string",\n    "why_exists": "string",\n    "innovation_potential": "string",\n    "search_query": "string (Google-style query for companies working on this)"\n  }\n]`,
+          content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdown.map((b) => b.title).join(", ")}\n\nReturn ONLY a JSON array:\n[\n  {\n    "gap_title": "string",\n    "why_exists": "string",\n    "innovation_potential": "string",\n    "search_query": "string (Google-style query for companies working on this)",\n    "public_companies": [\n      {\n        "name": "string (full company name)",\n        "ticker": "string (stock ticker)",\n        "exchange": "string (NASDAQ, NYSE, etc.)",\n        "relevance": "string (1 sentence on how they are involved in this gap)"\n      }\n    ]\n  }\n]`,
         },
       ],
       temperature: 0.9,

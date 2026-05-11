@@ -64,31 +64,131 @@ export const TRANSISTOR_EXAMPLE = {
       gap_title: "Sub-1nm Gate Oxide Leakage",
       why_exists: "As gate oxides shrink below 1nm to increase transistor density, quantum tunneling causes unacceptable leakage current, wasting power and generating heat even when transistors are 'off'.",
       innovation_potential: "New high-k dielectric materials like hafnium oxide allow thicker physical layers with the same electrical effect, dramatically reducing leakage. Further innovation needed for 2D material gates.",
-      search_query: "companies developing high-k dielectric materials transistor gate oxide 2025"
+      search_query: "companies developing high-k dielectric materials transistor gate oxide 2025",
+      public_companies: [
+        {
+          name: "Applied Materials",
+          ticker: "AMAT",
+          exchange: "NASDAQ",
+          relevance: "World leader in atomic-layer deposition equipment used to deposit high-k gate dielectrics like HfO2 at sub-1nm precision."
+        },
+        {
+          name: "Lam Research",
+          ticker: "LRCX",
+          exchange: "NASDAQ",
+          relevance: "Provides the etch and deposition systems critical for forming ultra-thin gate oxide stacks in advanced logic nodes."
+        },
+        {
+          name: "ASML Holding",
+          ticker: "ASML",
+          exchange: "NASDAQ",
+          relevance: "Sole supplier of EUV lithography machines that define the gate structures requiring sub-1nm dielectric control."
+        }
+      ]
     },
     {
       gap_title: "3D Transistor Stacking Limits",
       why_exists: "Horizontal scaling has nearly ended — Moore's Law continuation now requires stacking transistors vertically, but heat dissipation from buried layers becomes catastrophic without new cooling architectures.",
       innovation_potential: "Monolithic 3D ICs with buried power rails and microfluidic cooling could enable 100x density gains. Startups developing direct liquid cooling for 3D chiplets are gaining traction.",
-      search_query: "companies monolithic 3D IC stacking transistor cooling startup 2025"
+      search_query: "companies monolithic 3D IC stacking transistor cooling startup 2025",
+      public_companies: [
+        {
+          name: "Taiwan Semiconductor Manufacturing",
+          ticker: "TSM",
+          exchange: "NYSE",
+          relevance: "Leads 3D chip stacking with SoIC and CoWoS packaging technologies used in AI accelerators and advanced logic."
+        },
+        {
+          name: "SK Hynix",
+          ticker: "000660",
+          exchange: "KRX",
+          relevance: "Pioneers High Bandwidth Memory (HBM) stacking that connects memory dies vertically via through-silicon vias."
+        },
+        {
+          name: "Advanced Micro Devices",
+          ticker: "AMD",
+          exchange: "NASDAQ",
+          relevance: "Commercialized chiplet architecture with 3D V-Cache stacking, doubling L3 cache density for CPUs and GPUs."
+        }
+      ]
     },
     {
       gap_title: "2D Material Transistors Beyond Silicon",
       why_exists: "Silicon's band gap and carrier mobility are approaching fundamental limits at atomic scales. 2D materials like MoS2 and graphene have superior properties but are nearly impossible to manufacture reliably at scale.",
       innovation_potential: "A manufacturable 2D channel material could extend transistor scaling by a decade. Companies achieving wafer-scale deposition of defect-free 2D materials will unlock atomic-scale switching.",
-      search_query: "companies developing 2D transistor materials MoS2 graphene semiconductor 2025"
+      search_query: "companies developing 2D transistor materials MoS2 graphene semiconductor 2025",
+      public_companies: [
+        {
+          name: "Applied Materials",
+          ticker: "AMAT",
+          exchange: "NASDAQ",
+          relevance: "Developing CVD and ALD tools capable of depositing monolayer MoS2 and other TMDs at wafer scale."
+        },
+        {
+          name: "Tokyo Electron",
+          ticker: "TOELY",
+          exchange: "OTCMKTS",
+          relevance: "Leading Japanese equipment maker advancing thin-film deposition systems adaptable to 2D material growth."
+        },
+        {
+          name: "Intel",
+          ticker: "INTC",
+          exchange: "NASDAQ",
+          relevance: "Actively researching 2D channel transistors (RibbonFETs) and has published roadmaps incorporating 2D materials post-2nm."
+        }
+      ]
     },
     {
       gap_title: "Neuromorphic & Analog Compute",
       why_exists: "Digital binary switching wastes enormous energy on operations that biological neurons perform with milliwatts. Transistors operating in the analog domain for AI inference remain difficult to program and manufacture reliably.",
       innovation_potential: "Analog in-memory computing using memristors or phase-change materials could enable 1000x energy efficiency for AI workloads, eliminating the von Neumann bottleneck entirely.",
-      search_query: "companies neuromorphic analog compute memristor in-memory computing startup 2025"
+      search_query: "companies neuromorphic analog compute memristor in-memory computing startup 2025",
+      public_companies: [
+        {
+          name: "Intel",
+          ticker: "INTC",
+          exchange: "NASDAQ",
+          relevance: "Developed Loihi 2, a research neuromorphic chip with 1 million neurons, used for adaptive AI at the edge."
+        },
+        {
+          name: "International Business Machines",
+          ticker: "IBM",
+          exchange: "NYSE",
+          relevance: "Pioneering phase-change memory and analog AI chips that perform matrix multiplication in the memory array itself."
+        },
+        {
+          name: "Qualcomm",
+          ticker: "QCOM",
+          exchange: "NASDAQ",
+          relevance: "Shipping on-device AI inference chips (Hexagon NPU) that bring analog-inspired computing to billions of handsets."
+        }
+      ]
     },
     {
       gap_title: "Spin-Based Transistors (Spintronics)",
       why_exists: "Conventional transistors control charge flow, but electron spin is an untapped degree of freedom. Spin-based logic could operate at room temperature with near-zero switching energy, but spin coherence remains too short for practical circuits.",
       innovation_potential: "If spin coherence can be maintained across thousands of gate operations at room temperature, spintronic logic would enable non-volatile, ultra-low-power computing that retains state without power.",
-      search_query: "companies spintronics spin transistor room temperature non-volatile computing 2025"
+      search_query: "companies spintronics spin transistor room temperature non-volatile computing 2025",
+      public_companies: [
+        {
+          name: "Western Digital",
+          ticker: "WDC",
+          exchange: "NASDAQ",
+          relevance: "Already deploys spintronic read heads (TMR sensors) in HDDs and is researching spin-torque MRAM for storage."
+        },
+        {
+          name: "Seagate Technology",
+          ticker: "STX",
+          exchange: "NASDAQ",
+          relevance: "Uses giant magnetoresistance (GMR) in all its drives and funds research into spin-orbit torque switching devices."
+        },
+        {
+          name: "Everspin Technologies",
+          ticker: "MRAM",
+          exchange: "NASDAQ",
+          relevance: "Only pure-play public company shipping MRAM (spin-torque magnetic memory) — the first commercial spintronic compute memory."
+        }
+      ]
     }
   ]
 };
