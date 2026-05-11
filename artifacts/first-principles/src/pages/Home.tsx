@@ -20,7 +20,7 @@ import {
 import { getGetMeQueryOptions } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import type { BreakdownResult, ImageEntry } from "../types";
-import { generateBreakdown, regenerateGaps } from "../lib/grok";
+import { generateBreakdown } from "../lib/grok";
 import {
   generateImageOnServer,
   generateBreakdownOnServer,
@@ -204,18 +204,13 @@ export function Home() {
   }
 
   async function handleRegenerateGaps() {
-    if (!result) return;
-    if (!isPro && !apiKey) return;
+    if (!result || !isPro) return;
     setLoadingGaps(true);
     try {
-      const gaps = isPro
-        ? (
-            await regenerateGapsOnServer(
-              result.topic,
-              result.breakdown.map((b) => b.title),
-            )
-          ).gaps
-        : await regenerateGaps(result.topic, result.breakdown, apiKey);
+      const { gaps } = await regenerateGapsOnServer(
+        result.topic,
+        result.breakdown.map((b) => b.title),
+      );
       const newResult = { ...result, gaps };
       setResult(newResult);
 
