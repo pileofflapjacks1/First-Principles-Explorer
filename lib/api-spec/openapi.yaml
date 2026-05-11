@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: account
+    description: Authenticated account info
+  - name: images
+    description: Server-side image generation (Pro tier)
 paths:
   /healthz:
     get:
@@ -24,6 +28,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getMe
+      tags: [account]
+      summary: Current user account & plan
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          description: Unauthorized
+  /images:
+    post:
+      operationId: generateProImage
+      tags: [images]
+      summary: Generate an image with Grok Imagine (Pro tier required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImageInput"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedImage"
+        "401":
+          description: Unauthorized
+        "402":
+          description: Pro tier required
+        "429":
+          description: Monthly image limit reached
 components:
   schemas:
     HealthStatus:
@@ -33,4 +75,36 @@ components:
           type: string
       required:
         - status
-
+    Account:
+      type: object
+      required:
+        - userId
+        - isPro
+        - imagesGeneratedThisMonth
+        - monthlyImageLimit
+      properties:
+        userId:
+          type: string
+        email:
+          type: ["string", "null"]
+        isPro:
+          type: boolean
+        imagesGeneratedThisMonth:
+          type: integer
+        monthlyImageLimit:
+          type: integer
+    ImageInput:
+      type: object
+      required: [prompt]
+      properties:
+        prompt:
+          type: string
+          minLength: 1
+    GeneratedImage:
+      type: object
+      required: [url, imagesGeneratedThisMonth]
+      properties:
+        url:
+          type: string
+        imagesGeneratedThisMonth:
+          type: integer

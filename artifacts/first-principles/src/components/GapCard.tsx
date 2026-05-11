@@ -8,6 +8,7 @@ interface GapCardProps {
   index: number;
   imageEntry?: ImageEntry;
   onRegenerateImage?: () => void;
+  upsellReason?: "signed-out" | "free-tier" | null;
 }
 
 const GAP_COLORS = [
@@ -29,7 +30,7 @@ const EXCHANGES: Record<string, string> = {
   OTCMKTS: "OTC",
 };
 
-export function GapCard({ gap, index, imageEntry, onRegenerateImage }: GapCardProps) {
+export function GapCard({ gap, index, imageEntry, onRegenerateImage, upsellReason }: GapCardProps) {
   const [showCompanies, setShowCompanies] = useState(true);
 
   function handleFindCompanies() {
@@ -59,13 +60,14 @@ export function GapCard({ gap, index, imageEntry, onRegenerateImage }: GapCardPr
         </div>
       </div>
 
-      {/* Generated image */}
-      {imageEntry && onRegenerateImage && (
+      {/* Generated image (or upsell when not Pro) */}
+      {gap.image_prompt && (
         <ImageBlock
           imageEntry={imageEntry}
-          onRegenerate={onRegenerateImage}
+          onRegenerate={onRegenerateImage ?? (() => {})}
           caption={gap.gap_title}
           compact
+          upsellReason={upsellReason ?? null}
         />
       )}
 

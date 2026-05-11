@@ -1,14 +1,19 @@
 import { RefreshCw, ZoomIn, ImageOff } from "lucide-react";
 import type { ImageEntry } from "../types";
+import { UpgradePrompt } from "./UpgradePrompt";
 
 interface ImageBlockProps {
   imageEntry: ImageEntry | undefined;
   onRegenerate: () => void;
   caption?: string;
   compact?: boolean;
+  upsellReason?: "signed-out" | "free-tier" | null;
 }
 
-export function ImageBlock({ imageEntry, onRegenerate, caption, compact }: ImageBlockProps) {
+export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellReason }: ImageBlockProps) {
+  if (upsellReason) {
+    return <UpgradePrompt compact={compact} reason={upsellReason} />;
+  }
   if (!imageEntry) return null;
   const { url, loading, error } = imageEntry;
   const aspect = compact ? "aspect-[4/3]" : "aspect-video";

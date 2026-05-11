@@ -149,33 +149,5 @@ export async function regenerateGaps(
   }
 }
 
-export async function generateImage(
-  prompt: string,
-  apiKey: string
-): Promise<string> {
-  const response = await fetch("https://api.x.ai/v1/images/generations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "grok-imagine-image-quality",
-      prompt,
-      n: 1,
-      response_format: "url",
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Image API error (${response.status}): ${error}`);
-  }
-
-  const data = await response.json();
-  const url = data?.data?.[0]?.url;
-  if (!url) {
-    throw new Error("Image API returned no URL");
-  }
-  return url;
-}
+// Image generation is server-side only — see src/lib/api.ts
+// (gated behind Pro tier in the API server).

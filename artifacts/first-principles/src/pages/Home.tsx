@@ -1,7 +1,27 @@
 import { useState, useRef } from "react";
-import { Atom, Plus, Download, Copy, Check, RefreshCw, Key, Sparkles } from "lucide-react";
+import { Link } from "wouter";
+import {
+  Atom,
+  Plus,
+  Download,
+  Copy,
+  Check,
+  RefreshCw,
+  Key,
+  Sparkles,
+  Crown,
+} from "lucide-react";
+import {
+  Show,
+  useClerk,
+  useUser,
+  UserButton,
+} from "@clerk/react";
+import { getGetMeQueryOptions } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import type { BreakdownResult, ImageEntry } from "../types";
-import { generateBreakdown, regenerateGaps, generateImage } from "../lib/grok";
+import { generateBreakdown, regenerateGaps } from "../lib/grok";
+import { generateImageOnServer } from "../lib/api";
 import { TRANSISTOR_EXAMPLE } from "../data/transistorExample";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { AtomSpinner } from "../components/AtomSpinner";
@@ -21,6 +41,8 @@ const EXAMPLE_PROMPTS = [
 const breakdownKey = (level: number) => `breakdown-${level}`;
 const gapKey = (index: number) => `gap-${index}`;
 
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export function Home() {
   const [apiKey, setApiKey] = useState<string>(
     () => localStorage.getItem("xai_api_key") ?? ""
@@ -36,9 +58,30 @@ export function Home() {
   const [copied, setCopied] = useState(false);
   const [images, setImages] = useState<Record<string, ImageEntry>>({});
   const breakdownRef = useRef<HTMLDivElement>(null);
-  // Monotonic generation ID so background image promises from a previous
-  // breakdown can't leak into the state of a new one.
   const generationRef = useRef(0);
+
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
+  const { openSignIn } = useClerk();
+
+  // Only fetch /me when signed in (avoid 401 noise when signed out).
+  // Compose the generated query options with `enabled` to satisfy strict typing.
+  const { data: account, refetch: refetchAccount } = useQuery({
+    ...getGetMeQueryOptions(),
+    enabled: isSignedIn === true,
+    retry: false,
+  });
+  const isPro = account?.isPro ?? false;
+  const monthlyLimit = account?.monthlyImageLimit ?? 0;
+  const monthlyUsed = account?.imagesGeneratedThisMonth ?? 0;
+
+  const upsellReason: "signed-out" | "free-tier" | null = !userLoaded
+    ? null
+    : !isSignedIn
+      ? "signed-out"
+      : !isPro
+        ? "free-tier"
+        : null;
+  const canGenerateImages = upsellReason === null;
 
   function handleApiKeySave(key: string) {
     setApiKey(key);
@@ -58,29 +101,24 @@ export function Home() {
     }));
   }
 
-  async function generateOne(
-    key: string,
-    prompt: string,
-    currentApiKey: string,
-    genId: number
-  ) {
+  async function generateOne(key: string, imagePrompt: string, genId: number) {
     if (generationRef.current !== genId) return;
     setImageEntry(key, { loading: true, error: false, url: null });
     try {
-      const url = await generateImage(prompt, currentApiKey);
+      const { url } = await generateImageOnServer(imagePrompt);
       if (generationRef.current !== genId) return;
       setImageEntry(key, { url, loading: false, error: false });
+      void refetchAccount();
     } catch {
       if (generationRef.current !== genId) return;
       setImageEntry(key, { loading: false, error: true, url: null });
     }
   }
 
-  async function generateAllImages(data: BreakdownResult, currentApiKey: string) {
-    if (!currentApiKey) return;
+  async function generateAllImages(data: BreakdownResult) {
+    if (!canGenerateImages) return;
     const genId = ++generationRef.current;
 
-    // Initialize all entries as loading so skeletons show immediately
     const initial: Record<string, ImageEntry> = {};
     data.breakdown.forEach((b) => {
       if (b.image_prompt) initial[breakdownKey(b.level)] = { url: null, loading: true, error: false };
@@ -90,14 +128,12 @@ export function Home() {
     });
     setImages(initial);
 
-    // Fire all in parallel; allSettled so individual failures don't stop the rest.
-    // Each completion checks genId to avoid leaking into a newer breakdown's state.
     const tasks: Promise<unknown>[] = [];
     data.breakdown.forEach((b) => {
       if (b.image_prompt) {
         tasks.push(
-          generateImage(b.image_prompt, currentApiKey)
-            .then((url) => {
+          generateImageOnServer(b.image_prompt)
+            .then(({ url }) => {
               if (generationRef.current === genId) {
                 setImageEntry(breakdownKey(b.level), { url, loading: false, error: false });
               }
@@ -113,8 +149,8 @@ export function Home() {
     data.gaps.forEach((g, i) => {
       if (g.image_prompt) {
         tasks.push(
-          generateImage(g.image_prompt, currentApiKey)
-            .then((url) => {
+          generateImageOnServer(g.image_prompt)
+            .then(({ url }) => {
               if (generationRef.current === genId) {
                 setImageEntry(gapKey(i), { url, loading: false, error: false });
               }
@@ -128,6 +164,7 @@ export function Home() {
       }
     });
     await Promise.allSettled(tasks);
+    void refetchAccount();
   }
 
   async function handleSubmit(customPrompt?: string) {
@@ -144,14 +181,14 @@ export function Home() {
     setResult(null);
     setActiveCardId(null);
     setImages({});
-    // Invalidate any in-flight image generations from a previous breakdown
     generationRef.current++;
 
     try {
       const data = await generateBreakdown(topic, apiKey);
       setResult(data);
-      // Fire image generation in background (non-blocking for UI render)
-      void generateAllImages(data, apiKey);
+      if (canGenerateImages) {
+        void generateAllImages(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -167,40 +204,34 @@ export function Home() {
       const newResult = { ...result, gaps };
       setResult(newResult);
 
-      // Clear old gap images and regenerate
       setImages((prev) => {
         const next = { ...prev };
         Object.keys(next).forEach((k) => { if (k.startsWith("gap-")) delete next[k]; });
         return next;
       });
-      // Generate fresh gap images in parallel under the current generation
-      const genId = generationRef.current;
-      gaps.forEach((g, i) => {
-        if (g.image_prompt) {
-          void generateOne(gapKey(i), g.image_prompt, apiKey, genId);
-        }
-      });
+      if (canGenerateImages) {
+        const genId = generationRef.current;
+        gaps.forEach((g, i) => {
+          if (g.image_prompt) {
+            void generateOne(gapKey(i), g.image_prompt, genId);
+          }
+        });
+      }
     } catch {
-      // silently fail — keep existing gaps
+      // silently fail
     } finally {
       setLoadingGaps(false);
     }
   }
 
   function handleRegenerateBreakdownImage(level: number, imagePrompt: string) {
-    if (!apiKey) {
-      setShowApiModal(true);
-      return;
-    }
-    void generateOne(breakdownKey(level), imagePrompt, apiKey, generationRef.current);
+    if (!canGenerateImages) return;
+    void generateOne(breakdownKey(level), imagePrompt, generationRef.current);
   }
 
   function handleRegenerateGapImage(index: number, imagePrompt: string) {
-    if (!apiKey) {
-      setShowApiModal(true);
-      return;
-    }
-    void generateOne(gapKey(index), imagePrompt, apiKey, generationRef.current);
+    if (!canGenerateImages) return;
+    void generateOne(gapKey(index), imagePrompt, generationRef.current);
   }
 
   function handleNodeClick(label: string) {
@@ -245,9 +276,8 @@ export function Home() {
     setError(null);
     setImages({});
     generationRef.current++;
-    // If user has an API key, generate images for the example too
-    if (apiKey) {
-      void generateAllImages(TRANSISTOR_EXAMPLE, apiKey);
+    if (canGenerateImages) {
+      void generateAllImages(TRANSISTOR_EXAMPLE);
     }
   }
 
@@ -294,6 +324,32 @@ export function Home() {
                 New Breakdown
               </button>
             )}
+
+            <Show when="signed-in">
+              {isPro ? (
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(210_100%_66%/0.15)] border border-[hsl(210_100%_66%/0.35)] text-[10px] font-bold text-[hsl(210_100%_75%)]">
+                  <Crown className="w-3 h-3" />
+                  PRO · {monthlyUsed}/{monthlyLimit}
+                </span>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(280_65%_60%/0.15)] border border-[hsl(280_65%_60%/0.35)] text-[10px] font-bold text-[hsl(280_65%_80%)] hover:bg-[hsl(280_65%_60%/0.25)] transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Upgrade
+                </Link>
+              )}
+              <UserButton />
+            </Show>
+            <Show when="signed-out">
+              <button
+                onClick={() => openSignIn({ fallbackRedirectUrl: basePath || "/" })}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] transition-colors"
+              >
+                Sign in
+              </button>
+            </Show>
           </div>
         </div>
       </nav>
@@ -405,7 +461,6 @@ export function Home() {
                 {result.breakdown.length} levels from fundamentals to application
               </p>
             </div>
-            {/* Quick re-query */}
             <div className="shrink-0 flex items-center gap-2">
               <div className="flex items-center gap-2 bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-xl px-3 py-2">
                 <input
@@ -428,14 +483,39 @@ export function Home() {
           </div>
 
           {/* Visuals notice */}
-          {Object.keys(images).length > 0 && (
+          {canGenerateImages && Object.keys(images).length > 0 && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[hsl(280_65%_60%/0.1)] border border-[hsl(280_65%_60%/0.25)] text-[10px] text-[hsl(280_65%_80%)]">
               <Sparkles className="w-3 h-3" />
-              Visuals generated on-the-fly with xAI Grok Imagine
+              Visuals generated on-the-fly with xAI Grok Imagine · {monthlyUsed}/{monthlyLimit} this month
+            </div>
+          )}
+          {!canGenerateImages && (
+            <div className="rounded-xl border border-[hsl(280_65%_60%/0.3)] bg-gradient-to-r from-[hsl(280_65%_60%/0.08)] to-[hsl(210_100%_66%/0.06)] p-3.5 flex items-center gap-3 flex-wrap">
+              <Sparkles className="w-4 h-4 text-[hsl(280_65%_80%)] shrink-0" />
+              <p className="text-xs text-[hsl(213_31%_85%)] flex-1 min-w-[200px]">
+                {upsellReason === "signed-out"
+                  ? "Sign in and upgrade to Pro to generate AI visuals for every level and gap."
+                  : "Upgrade to Pro to generate AI visuals for every level and gap — no API key juggling."}
+              </p>
+              {upsellReason === "signed-out" ? (
+                <button
+                  onClick={() => openSignIn({ fallbackRedirectUrl: basePath || "/" })}
+                  className="px-3 py-1.5 rounded-lg bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-xs font-bold transition-colors"
+                >
+                  Sign in
+                </button>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="px-3 py-1.5 rounded-lg bg-[hsl(280_65%_60%)] hover:bg-[hsl(280_65%_55%)] text-white text-xs font-bold transition-colors"
+                >
+                  Upgrade to Pro
+                </Link>
+              )}
             </div>
           )}
 
-          {/* Flow Diagram — full width at top */}
+          {/* Flow Diagram */}
           <div>
             <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
               Flow Diagram
@@ -460,7 +540,7 @@ export function Home() {
             </div>
           </div>
 
-          {/* Hierarchical Breakdown — full width below diagram */}
+          {/* Hierarchical Breakdown */}
           <div ref={breakdownRef}>
             <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
               Hierarchical Breakdown
@@ -477,6 +557,7 @@ export function Home() {
                     defaultOpen={item.level <= 2}
                     imageEntry={images[breakdownKey(item.level)]}
                     onRegenerateImage={() => handleRegenerateBreakdownImage(item.level, item.image_prompt)}
+                    upsellReason={upsellReason}
                   />
                 );
               })}
@@ -520,6 +601,7 @@ export function Home() {
                     index={i}
                     imageEntry={images[gapKey(i)]}
                     onRegenerateImage={() => handleRegenerateGapImage(i, gap.image_prompt)}
+                    upsellReason={upsellReason}
                   />
                 ))}
               </div>
@@ -554,13 +636,13 @@ export function Home() {
         </div>
       )}
 
-      {/* API Key Modals */}
       {showApiModal && (
         <ApiKeyModal onSave={handleApiKeySave} />
       )}
       {showApiEdit && (
         <ApiKeyModal onSave={handleApiKeySave} onClose={() => setShowApiEdit(false)} isEdit />
       )}
+
     </div>
   );
 }

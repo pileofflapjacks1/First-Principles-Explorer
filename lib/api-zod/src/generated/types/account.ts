@@ -5,9 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
 
 export interface Account {
   userId: string;
@@ -16,14 +13,4 @@ export interface Account {
   isPro: boolean;
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
-}
-
-export interface ImageInput {
-  /** @minLength 1 */
-  prompt: string;
-}
-
-export interface GeneratedImage {
-  url: string;
-  imagesGeneratedThisMonth: number;
 }

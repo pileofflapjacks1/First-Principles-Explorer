@@ -14,3 +14,27 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Current user account & plan
+ */
+export const GetMeResponse = zod.object({
+  userId: zod.string(),
+  email: zod.string().nullish(),
+  isPro: zod.boolean(),
+  imagesGeneratedThisMonth: zod.number(),
+  monthlyImageLimit: zod.number(),
+});
+
+/**
+ * @summary Generate an image with Grok Imagine (Pro tier required)
+ */
+
+export const GenerateProImageBody = zod.object({
+  prompt: zod.string().min(1),
+});
+
+export const GenerateProImageResponse = zod.object({
+  url: zod.string(),
+  imagesGeneratedThisMonth: zod.number(),
+});

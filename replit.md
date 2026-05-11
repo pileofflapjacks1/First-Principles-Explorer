@@ -1,6 +1,6 @@
-# [Project name]
+# FirstPrinciples Explorer
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+AI-powered first-principles breakdowns of any topic — hierarchical levels, interactive Mermaid flowcharts, innovation gap cards with public companies, and Grok Imagine visuals (Pro tier).
 
 ## Run & Operate
 
@@ -22,23 +22,40 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- Frontend: `artifacts/first-principles/` (React + Vite). Entry: `src/App.tsx`, main page: `src/pages/Home.tsx`, pricing: `src/pages/Pricing.tsx`.
+- Server: `artifacts/api-server/` (Express). Routes: `src/routes/{me,images,health}.ts`. Auth middleware: `src/middlewares/auth.ts`. Clerk proxy: `src/middlewares/clerkProxyMiddleware.ts`.
+- API contract (source of truth): `lib/api-spec/openapi.yaml` → regenerates `lib/api-client-react/` (hooks + customFetch) and `lib/api-zod/` (zod validators).
+- DB schema: `lib/db/src/schema/users.ts` (Drizzle).
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Monetization without Stripe (for now).** Pro tier is a manual `users.is_pro` boolean flipped in Postgres. Pricing page links to a "Request Pro access" mailto. Self-serve checkout is a future task.
+- **Server-side image proxy.** xAI image generation runs only in the API server using a server-held `XAI_API_KEY`. The frontend never sees that key. Free users still bring their own xAI key for the text breakdown (`src/lib/grok.ts`); Pro users get hosted images at `/api/images`.
+- **Auth via Replit-managed Clerk.** Same-origin cookies (frontend at `/` and API at `/api`) flow automatically; no token forwarding needed.
+- **Monthly image quota.** 100 images/month for Pro, tracked in `users.image_count` + `image_count_reset_at`, reset on first request of a new UTC calendar month.
+- **Tailwind v4 + Clerk layer.** `vite.config.ts` passes `tailwindcss({ optimize: false })` and `index.css` declares `@layer theme, base, clerk, components, utilities;` so Clerk's UI styles compose with Tailwind.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Type any topic ("how does a transistor work", "lithium-ion battery", etc.) and get:
+
+1. A hierarchical first-principles breakdown (atoms → application).
+2. An interactive Mermaid flowchart with clickable nodes that scroll to matching cards.
+3. Innovation-gap cards with real publicly traded companies positioned in each gap.
+4. Grokipedia "learn more" links for every level.
+5. (Pro) AI concept-art images on every level and every gap, with one-click regenerate.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- **Skip Stripe for now.** Pro is a manual DB flag.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run `pnpm --filter @workspace/api-spec run codegen` after editing `openapi.yaml`.
+- Always run `pnpm --filter @workspace/db run push` after editing schema in `lib/db/`.
+- Never use `console.log` in server code — use `req.log` in route handlers.
+- The Clerk frontend-API proxy middleware (`/api/__clerk`) is a no-op in dev; only active in production.
+- To grant a user Pro: `UPDATE users SET is_pro = true WHERE id = '<clerk_user_id>';`
 
 ## Pointers
 

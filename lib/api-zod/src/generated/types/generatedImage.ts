@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export * from "./account";
-export * from "./generatedImage";
-export * from "./healthStatus";
-export * from "./imageInput";
+export interface GeneratedImage {
+  url: string;
+  imagesGeneratedThisMonth: number;
+}
