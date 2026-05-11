@@ -105,6 +105,44 @@ export async function generateBreakdownWithXai(
   return parseJsonLoose<unknown>(content, "object");
 }
 
+const STOCK_SYSTEM_PROMPT = `You are a balanced equity research analyst writing for retail investors. Given a public company and a specific innovation gap it is positioned for, write a concise, plain-English analysis covering: (1) what the company actually does, (2) how it is positioned for this innovation gap, (3) recent business / stock-price commentary at a high level (do not invent specific prices or dates — speak in qualitative terms like "has rallied recently" or "trades at a premium multiple" only if you are confident), (4) bull case in 2-3 bullets, (5) bear case / risks in 2-3 bullets, (6) a one-line bottom line. End with a short disclaimer that this is informational, not financial advice. Output clean Markdown — use ## headings and bullet lists. Do NOT wrap in code fences.`;
+
+export async function analyzeStockWithXai(
+  params: {
+    name: string;
+    ticker: string;
+    exchange: string;
+    relevance: string;
+    topic: string;
+    gapTitle: string;
+    gapWhyExists: string;
+    gapInnovationPotential: string;
+  },
+  apiKey: string,
+): Promise<string> {
+  const userPrompt = [
+    `Company: ${params.name} (${params.exchange}: ${params.ticker})`,
+    `Topic context: ${params.topic}`,
+    `Innovation gap: ${params.gapTitle}`,
+    `Why the gap exists: ${params.gapWhyExists}`,
+    `Innovation potential: ${params.gapInnovationPotential}`,
+    `Why this company was surfaced: ${params.relevance}`,
+    "",
+    "Write the analysis now.",
+  ].join("\n");
+
+  const content = await chatCompletion(apiKey, {
+    model: "grok-3",
+    messages: [
+      { role: "system", content: STOCK_SYSTEM_PROMPT },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.5,
+    max_tokens: 1500,
+  });
+  return stripFences(content);
+}
+
 export async function regenerateGapsWithXai(
   topic: string,
   breakdownTitles: string[],

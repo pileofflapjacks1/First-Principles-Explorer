@@ -623,10 +623,12 @@ export function Home() {
                   <GapCard
                     key={i}
                     gap={gap}
+                    topic={result.topic}
                     index={i}
                     imageEntry={images[gapKey(i)]}
                     onRegenerateImage={() => handleRegenerateGapImage(i, gap.image_prompt)}
                     upsellReason={upsellReason}
+                    isPro={isPro}
                   />
                 ))}
               </div>

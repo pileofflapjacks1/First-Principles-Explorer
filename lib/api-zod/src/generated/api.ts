@@ -66,6 +66,25 @@ export const RegenerateProGapsResponse = zod.object({
 });
 
 /**
+ * @summary Generate an AI analysis of a public company in the context of an innovation gap (Pro tier required)
+ */
+
+export const AnalyzeProStockBody = zod.object({
+  name: zod.string().min(1),
+  ticker: zod.string().min(1),
+  exchange: zod.string().min(1),
+  relevance: zod.string(),
+  topic: zod.string().min(1),
+  gapTitle: zod.string().min(1),
+  gapWhyExists: zod.string(),
+  gapInnovationPotential: zod.string(),
+});
+
+export const AnalyzeProStockResponse = zod.object({
+  analysis: zod.string(),
+});
+
+/**
  * @summary Create a Stripe Checkout session for the Pro subscription
  */
 export const createStripeCheckoutSessionBodyIntervalDefault = `month`;

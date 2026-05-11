@@ -18,6 +18,8 @@ tags:
     description: Stripe checkout & customer portal
   - name: breakdown
     description: Server-side first-principles breakdown (Pro tier)
+  - name: stocks
+    description: AI-powered stock analysis (Pro tier)
 paths:
   /healthz:
     get:
@@ -121,6 +123,30 @@ paths:
                     items:
                       type: object
                       additionalProperties: true
+        "401":
+          description: Unauthorized
+        "402":
+          description: Pro tier required
+        "502":
+          description: Upstream model error
+  /stocks/analyze:
+    post:
+      operationId: analyzeProStock
+      tags: [stocks]
+      summary: Generate an AI analysis of a public company in the context of an innovation gap (Pro tier required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockAnalysisInput"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockAnalysis"
         "401":
           description: Unauthorized
         "402":
@@ -233,6 +259,45 @@ components:
           type: array
           items:
             type: string
+    StockAnalysisInput:
+      type: object
+      required:
+        - name
+        - ticker
+        - exchange
+        - relevance
+        - topic
+        - gapTitle
+        - gapWhyExists
+        - gapInnovationPotential
+      properties:
+        name:
+          type: string
+          minLength: 1
+        ticker:
+          type: string
+          minLength: 1
+        exchange:
+          type: string
+          minLength: 1
+        relevance:
+          type: string
+        topic:
+          type: string
+          minLength: 1
+        gapTitle:
+          type: string
+          minLength: 1
+        gapWhyExists:
+          type: string
+        gapInnovationPotential:
+          type: string
+    StockAnalysis:
+      type: object
+      required: [analysis]
+      properties:
+        analysis:
+          type: string
     StripeCheckoutRequest:
       type: object
       properties:

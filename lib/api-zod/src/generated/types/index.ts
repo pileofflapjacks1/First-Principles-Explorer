@@ -15,6 +15,8 @@ export * from "./healthStatus";
 export * from "./imageInput";
 export * from "./regenerateProGaps200";
 export * from "./regenerateProGaps200GapsItem";
+export * from "./stockAnalysis";
+export * from "./stockAnalysisInput";
 export * from "./stripeCheckoutRequest";
 export * from "./stripeCheckoutRequestInterval";
 export * from "./stripeRedirect";

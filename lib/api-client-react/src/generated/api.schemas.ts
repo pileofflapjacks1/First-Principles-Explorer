@@ -43,6 +43,26 @@ export interface GapsInput {
   breakdownTitles: string[];
 }
 
+export interface StockAnalysisInput {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  ticker: string;
+  /** @minLength 1 */
+  exchange: string;
+  relevance: string;
+  /** @minLength 1 */
+  topic: string;
+  /** @minLength 1 */
+  gapTitle: string;
+  gapWhyExists: string;
+  gapInnovationPotential: string;
+}
+
+export interface StockAnalysis {
+  analysis: string;
+}
+
 export type StripeCheckoutRequestInterval =
   (typeof StripeCheckoutRequestInterval)[keyof typeof StripeCheckoutRequestInterval];
 

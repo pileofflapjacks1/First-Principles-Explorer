@@ -25,6 +25,8 @@ import type {
   HealthStatus,
   ImageInput,
   RegenerateProGaps200,
+  StockAnalysis,
+  StockAnalysisInput,
   StripeCheckoutRequest,
   StripeRedirect,
 } from "./api.schemas";
@@ -433,6 +435,92 @@ export const useRegenerateProGaps = <
   TContext
 > => {
   return useMutation(getRegenerateProGapsMutationOptions(options));
+};
+
+/**
+ * @summary Generate an AI analysis of a public company in the context of an innovation gap (Pro tier required)
+ */
+export const getAnalyzeProStockUrl = () => {
+  return `/api/stocks/analyze`;
+};
+
+export const analyzeProStock = async (
+  stockAnalysisInput: StockAnalysisInput,
+  options?: RequestInit,
+): Promise<StockAnalysis> => {
+  return customFetch<StockAnalysis>(getAnalyzeProStockUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(stockAnalysisInput),
+  });
+};
+
+export const getAnalyzeProStockMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeProStock>>,
+    TError,
+    { data: BodyType<StockAnalysisInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzeProStock>>,
+  TError,
+  { data: BodyType<StockAnalysisInput> },
+  TContext
+> => {
+  const mutationKey = ["analyzeProStock"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzeProStock>>,
+    { data: BodyType<StockAnalysisInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return analyzeProStock(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzeProStockMutationResult = NonNullable<
+  Awaited<ReturnType<typeof analyzeProStock>>
+>;
+export type AnalyzeProStockMutationBody = BodyType<StockAnalysisInput>;
+export type AnalyzeProStockMutationError = ErrorType<void>;
+
+/**
+ * @summary Generate an AI analysis of a public company in the context of an innovation gap (Pro tier required)
+ */
+export const useAnalyzeProStock = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeProStock>>,
+    TError,
+    { data: BodyType<StockAnalysisInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof analyzeProStock>>,
+  TError,
+  { data: BodyType<StockAnalysisInput> },
+  TContext
+> => {
+  return useMutation(getAnalyzeProStockMutationOptions(options));
 };
 
 /**
