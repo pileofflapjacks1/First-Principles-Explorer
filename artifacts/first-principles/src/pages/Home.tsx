@@ -292,13 +292,37 @@ export function Home() {
             </div>
           </div>
 
-          {/* Split view: Breakdown + Flowchart */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Left: Breakdown */}
-            <div className="lg:col-span-3 space-y-2" ref={breakdownRef}>
-              <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
-                Hierarchical Breakdown
-              </h3>
+          {/* Flow Diagram — full width at top */}
+          <div>
+            <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
+              Flow Diagram
+            </h3>
+            <div className="rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] p-4">
+              <MermaidChart
+                chart={result.mermaid_flowchart}
+                gapNodes={result.gap_nodes ?? []}
+                onNodeClick={handleNodeClick}
+              />
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-[hsl(215.4_16.3%_36.9%)]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border border-[hsl(210_100%_66%)] bg-[hsl(224_71%_10%)] inline-block" />
+                  Standard node
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-sm border-2 border-[hsl(38_92%_50%)] bg-[hsl(38_92%_8%)] inline-block" />
+                  Innovation gap
+                </span>
+                <span>· Click a node to jump to its breakdown</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hierarchical Breakdown — full width below diagram */}
+          <div ref={breakdownRef}>
+            <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
+              Hierarchical Breakdown
+            </h3>
+            <div className="space-y-2">
               {result.breakdown.map((item) => {
                 const id = `card-level-${item.level}`;
                 return (
@@ -311,33 +335,6 @@ export function Home() {
                   />
                 );
               })}
-            </div>
-
-            {/* Right: Flowchart */}
-            <div className="lg:col-span-2">
-              <div className="sticky top-20">
-                <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
-                  Flow Diagram
-                </h3>
-                <div className="rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] p-4">
-                  <MermaidChart
-                    chart={result.mermaid_flowchart}
-                    gapNodes={result.gap_nodes ?? []}
-                    onNodeClick={handleNodeClick}
-                  />
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-[hsl(215.4_16.3%_36.9%)]">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm border border-[hsl(210_100%_66%)] bg-[hsl(224_71%_10%)] inline-block" />
-                      Standard node
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm border-2 border-[hsl(38_92%_50%)] bg-[hsl(38_92%_8%)] inline-block" />
-                      Innovation gap
-                    </span>
-                    <span>· Click to jump to breakdown</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
