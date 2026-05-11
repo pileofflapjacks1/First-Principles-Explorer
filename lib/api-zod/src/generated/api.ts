@@ -42,6 +42,14 @@ export const GenerateProImageResponse = zod.object({
 /**
  * @summary Create a Stripe Checkout session for the Pro subscription
  */
+export const createStripeCheckoutSessionBodyIntervalDefault = `month`;
+
+export const CreateStripeCheckoutSessionBody = zod.object({
+  interval: zod
+    .enum(["month", "year"])
+    .default(createStripeCheckoutSessionBodyIntervalDefault),
+});
+
 export const CreateStripeCheckoutSessionResponse = zod.object({
   url: zod.string(),
 });

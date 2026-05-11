@@ -73,6 +73,12 @@ paths:
       operationId: createStripeCheckoutSession
       tags: [stripe]
       summary: Create a Stripe Checkout session for the Pro subscription
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StripeCheckoutRequest"
       responses:
         "200":
           description: ok
@@ -150,3 +156,10 @@ components:
       properties:
         url:
           type: string
+    StripeCheckoutRequest:
+      type: object
+      properties:
+        interval:
+          type: string
+          enum: [month, year]
+          default: month

@@ -21,6 +21,7 @@ import type {
   GeneratedImage,
   HealthStatus,
   ImageInput,
+  StripeCheckoutRequest,
   StripeRedirect,
 } from "./api.schemas";
 
@@ -266,11 +267,14 @@ export const getCreateStripeCheckoutSessionUrl = () => {
 };
 
 export const createStripeCheckoutSession = async (
+  stripeCheckoutRequest?: StripeCheckoutRequest,
   options?: RequestInit,
 ): Promise<StripeRedirect> => {
   return customFetch<StripeRedirect>(getCreateStripeCheckoutSessionUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(stripeCheckoutRequest),
   });
 };
 
@@ -281,14 +285,14 @@ export const getCreateStripeCheckoutSessionMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createStripeCheckoutSession>>,
     TError,
-    void,
+    { data: BodyType<StripeCheckoutRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof createStripeCheckoutSession>>,
   TError,
-  void,
+  { data: BodyType<StripeCheckoutRequest> },
   TContext
 > => {
   const mutationKey = ["createStripeCheckoutSession"];
@@ -302,9 +306,11 @@ export const getCreateStripeCheckoutSessionMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof createStripeCheckoutSession>>,
-    void
-  > = () => {
-    return createStripeCheckoutSession(requestOptions);
+    { data: BodyType<StripeCheckoutRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createStripeCheckoutSession(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -313,7 +319,8 @@ export const getCreateStripeCheckoutSessionMutationOptions = <
 export type CreateStripeCheckoutSessionMutationResult = NonNullable<
   Awaited<ReturnType<typeof createStripeCheckoutSession>>
 >;
-
+export type CreateStripeCheckoutSessionMutationBody =
+  BodyType<StripeCheckoutRequest>;
 export type CreateStripeCheckoutSessionMutationError = ErrorType<void>;
 
 /**
@@ -326,14 +333,14 @@ export const useCreateStripeCheckoutSession = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof createStripeCheckoutSession>>,
     TError,
-    void,
+    { data: BodyType<StripeCheckoutRequest> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof createStripeCheckoutSession>>,
   TError,
-  void,
+  { data: BodyType<StripeCheckoutRequest> },
   TContext
 > => {
   return useMutation(getCreateStripeCheckoutSessionMutationOptions(options));

@@ -31,3 +31,15 @@ export interface GeneratedImage {
 export interface StripeRedirect {
   url: string;
 }
+
+export type StripeCheckoutRequestInterval =
+  (typeof StripeCheckoutRequestInterval)[keyof typeof StripeCheckoutRequestInterval];
+
+export const StripeCheckoutRequestInterval = {
+  month: "month",
+  year: "year",
+} as const;
+
+export interface StripeCheckoutRequest {
+  interval?: StripeCheckoutRequestInterval;
+}

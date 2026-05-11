@@ -2,20 +2,24 @@ import express, { Router, type IRouter, type Request, type Response } from "expr
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
 import { db, usersTable } from "@workspace/db";
+import { CreateStripeCheckoutSessionBody } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
 import { getStripeSync, getUncachableStripeClient } from "../lib/stripeClient";
 
-const PRO_PRICE_AMOUNT_CENTS = 1200;
+const PRO_PRICE_MONTHLY_CENTS = 1200;
+const PRO_PRICE_ANNUAL_CENTS = 10800; // $108/yr — 25% off $144
 const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
+
+type BillingInterval = "month" | "year";
 
 // Statuses that grant Pro access. `past_due`, `unpaid`, `incomplete`,
 // `incomplete_expired`, `canceled`, and `paused` all revoke access — payment
 // failure must immediately downgrade the user.
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
 
-async function getProPriceId(): Promise<string> {
+async function getProPriceId(interval: BillingInterval = "month"): Promise<string> {
   const stripe = await getUncachableStripeClient();
-  // Idempotently locate or create the $12/mo Pro price.
+  // Idempotently locate or create the Pro price for the requested interval.
   const products = await stripe.products.search({
     query: `name:'${PRO_PRODUCT_NAME}' AND active:'true'`,
   });
@@ -26,6 +30,8 @@ async function getProPriceId(): Promise<string> {
       description: "Server-hosted Grok Imagine visuals + 100 images/month",
     });
   }
+  const amount =
+    interval === "year" ? PRO_PRICE_ANNUAL_CENTS : PRO_PRICE_MONTHLY_CENTS;
   const prices = await stripe.prices.list({
     product: product.id,
     active: true,
@@ -33,18 +39,58 @@ async function getProPriceId(): Promise<string> {
   });
   const existing = prices.data.find(
     (p) =>
-      p.unit_amount === PRO_PRICE_AMOUNT_CENTS &&
+      p.unit_amount === amount &&
       p.currency === "usd" &&
-      p.recurring?.interval === "month",
+      p.recurring?.interval === interval,
   );
   if (existing) return existing.id;
   const price = await stripe.prices.create({
     product: product.id,
-    unit_amount: PRO_PRICE_AMOUNT_CENTS,
+    unit_amount: amount,
     currency: "usd",
-    recurring: { interval: "month" },
+    recurring: { interval },
   });
   return price.id;
+}
+
+async function getProPortalConfigurationId(): Promise<string> {
+  const stripe = await getUncachableStripeClient();
+  const monthlyPriceId = await getProPriceId("month");
+  const annualPriceId = await getProPriceId("year");
+  const product = (await stripe.prices.retrieve(monthlyPriceId)).product;
+  const productId = typeof product === "string" ? product : product.id;
+
+  // Look for an existing configuration that already covers both prices.
+  const existing = await stripe.billingPortal.configurations.list({ limit: 100 });
+  const match = existing.data.find((cfg) => {
+    const update = cfg.features.subscription_update;
+    if (!update?.enabled) return false;
+    const products = update.products ?? [];
+    const target = products.find((p) => p.product === productId);
+    if (!target) return false;
+    const prices = new Set(target.prices);
+    return prices.has(monthlyPriceId) && prices.has(annualPriceId);
+  });
+  if (match) return match.id;
+
+  const created = await stripe.billingPortal.configurations.create({
+    business_profile: { headline: "FirstPrinciples Pro" },
+    features: {
+      customer_update: { enabled: true, allowed_updates: ["email", "address"] },
+      invoice_history: { enabled: true },
+      payment_method_update: { enabled: true },
+      subscription_cancel: { enabled: true, mode: "at_period_end" },
+      subscription_update: {
+        enabled: true,
+        default_allowed_updates: ["price"],
+        proration_behavior: "create_prorations",
+        products: [
+          { product: productId, prices: [monthlyPriceId, annualPriceId] },
+        ],
+      },
+    },
+  });
+  return created.id;
 }
 
 function originFromRequest(req: Request): string {
@@ -183,9 +229,16 @@ router.post(
       return;
     }
 
+    const parsed = CreateStripeCheckoutSessionBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid request body" });
+      return;
+    }
+    const interval = parsed.data.interval;
+
     try {
       const stripe = await getUncachableStripeClient();
-      const priceId = await getProPriceId();
+      const priceId = await getProPriceId(interval);
       const origin = originFromRequest(req);
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -231,9 +284,11 @@ router.post(
     }
     try {
       const stripe = await getUncachableStripeClient();
+      const configurationId = await getProPortalConfigurationId();
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
         return_url: `${originFromRequest(req)}/pricing`,
+        configuration: configurationId,
       });
       res.json({ url: session.url });
     } catch (err) {

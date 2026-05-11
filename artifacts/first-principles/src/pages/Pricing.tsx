@@ -14,6 +14,10 @@ export function Pricing() {
   const isPro = account?.isPro ?? false;
   const [error, setError] = useState<string | null>(null);
 
+  const [billingInterval, setBillingInterval] = useState<"month" | "year">(
+    "month",
+  );
+
   const checkoutMutation = useCreateStripeCheckoutSession({
     mutation: {
       onSuccess: (data) => {
@@ -103,19 +107,58 @@ export function Pricing() {
               <Sparkles className="w-3 h-3" />
               Recommended
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wider text-[hsl(210_100%_75%)]">
-                Pro
-              </p>
-              <p className="text-3xl font-bold mt-1">
-                $12
-                <span className="text-base font-normal text-[hsl(215.4_16.3%_56.9%)]">
-                  /month
-                </span>
-              </p>
-              <p className="text-xs text-[hsl(215.4_16.3%_66.9%)]">
-                Server-hosted xAI key — no setup, just sign in
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase tracking-wider text-[hsl(210_100%_75%)]">
+                  Pro
+                </p>
+                <div className="inline-flex rounded-full border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_4%)] p-0.5 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval("month")}
+                    className={`px-2.5 py-1 rounded-full transition-colors ${
+                      billingInterval === "month"
+                        ? "bg-[hsl(210_100%_66%)] text-[hsl(224_71%_4%)] font-semibold"
+                        : "text-[hsl(215.4_16.3%_66.9%)] hover:text-[hsl(213_31%_91%)]"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingInterval("year")}
+                    className={`px-2.5 py-1 rounded-full transition-colors inline-flex items-center gap-1 ${
+                      billingInterval === "year"
+                        ? "bg-[hsl(210_100%_66%)] text-[hsl(224_71%_4%)] font-semibold"
+                        : "text-[hsl(215.4_16.3%_66.9%)] hover:text-[hsl(213_31%_91%)]"
+                    }`}
+                  >
+                    Annual
+                    <span
+                      className={`text-[9px] px-1 py-0.5 rounded ${
+                        billingInterval === "year"
+                          ? "bg-[hsl(224_71%_4%)] text-[hsl(160_60%_70%)]"
+                          : "bg-[hsl(160_60%_45%/0.15)] text-[hsl(160_60%_70%)]"
+                      }`}
+                    >
+                      Save 25%
+                    </span>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-bold">
+                  {billingInterval === "year" ? "$9" : "$12"}
+                  <span className="text-base font-normal text-[hsl(215.4_16.3%_56.9%)]">
+                    /month
+                  </span>
+                </p>
+                <p className="text-xs text-[hsl(215.4_16.3%_66.9%)]">
+                  {billingInterval === "year"
+                    ? "$108 billed annually — save $36/yr"
+                    : "Server-hosted xAI key — no setup, just sign in"}
+                </p>
+              </div>
             </div>
             <ul className="space-y-2 text-sm text-[hsl(213_31%_91%)]">
               <Feature>Everything in Free</Feature>
@@ -155,7 +198,9 @@ export function Pricing() {
                   disabled={checkoutPending}
                   onClick={() => {
                     setError(null);
-                    checkoutMutation.mutate();
+                    checkoutMutation.mutate({
+                      data: { interval: billingInterval },
+                    });
                   }}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
                 >
