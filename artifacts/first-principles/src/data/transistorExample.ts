@@ -10,7 +10,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Quantum Mechanics", url: "https://grokipedia.com/page/grokipedia-search?q=quantum+mechanics" },
         { title: "Wave-Particle Duality", url: "https://grokipedia.com/page/grokipedia-search?q=wave+particle+duality" },
         { title: "Quantum Tunneling", url: "https://grokipedia.com/page/grokipedia-search?q=quantum+tunneling" },
-      ]
+      ],
+      image_prompt: "photorealistic scientific illustration of electron wave-particle duality around a silicon atom nucleus, glowing probability cloud showing quantized energy levels, dark background with deep blue and purple highlights, educational diagram style, high contrast"
     },
     {
       level: 2,
@@ -21,7 +22,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Covalent Bonding", url: "https://grokipedia.com/page/grokipedia-search?q=covalent+bonding" },
         { title: "Silicon Crystal Structure", url: "https://grokipedia.com/page/grokipedia-search?q=silicon+crystal+structure" },
         { title: "Valence Electrons", url: "https://grokipedia.com/page/grokipedia-search?q=valence+electrons" },
-      ]
+      ],
+      image_prompt: "cutaway 3D diagram of a silicon crystal lattice with diamond cubic structure, silicon atoms shown as polished spheres connected by glowing covalent bonds, deep navy background, photorealistic educational style"
     },
     {
       level: 3,
@@ -32,7 +34,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Electronic Band Structure", url: "https://grokipedia.com/page/grokipedia-search?q=electronic+band+structure" },
         { title: "Band Gap", url: "https://grokipedia.com/page/grokipedia-search?q=band+gap+semiconductor" },
         { title: "Fermi Level", url: "https://grokipedia.com/page/grokipedia-search?q=fermi+level" },
-      ]
+      ],
+      image_prompt: "scientific diagram of silicon semiconductor energy band structure, valence band and conduction band as glowing horizontal layers separated by a forbidden gap, an electron jumping across the gap as a streak of light, purple and cyan tones, clean infographic style"
     },
     {
       level: 4,
@@ -43,7 +46,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Semiconductor Doping", url: "https://grokipedia.com/page/grokipedia-search?q=semiconductor+doping" },
         { title: "N-type and P-type Silicon", url: "https://grokipedia.com/page/grokipedia-search?q=n-type+p-type+semiconductor" },
         { title: "Electron Holes", url: "https://grokipedia.com/page/grokipedia-search?q=electron+hole+semiconductor" },
-      ]
+      ],
+      image_prompt: "side-by-side cross-section infographic of N-type silicon with phosphorus donor atoms in blue releasing free electrons, and P-type silicon with boron acceptor atoms in red creating holes, atomic lattice clearly visible, educational style, dark background"
     },
     {
       level: 5,
@@ -54,7 +58,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "P–N Junction", url: "https://grokipedia.com/page/grokipedia-search?q=p-n+junction" },
         { title: "Depletion Region", url: "https://grokipedia.com/page/grokipedia-search?q=depletion+region+semiconductor" },
         { title: "Diode", url: "https://grokipedia.com/page/grokipedia-search?q=diode+semiconductor" },
-      ]
+      ],
+      image_prompt: "photorealistic cutaway diagram of a P-N junction in silicon showing the depletion region as a translucent zone, charge carriers as glowing red and blue spheres, electric field arrows in the gap, educational scientific illustration, high contrast dark background"
     },
     {
       level: 6,
@@ -65,7 +70,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "MOSFET", url: "https://grokipedia.com/page/grokipedia-search?q=MOSFET+transistor" },
         { title: "Gate Oxide", url: "https://grokipedia.com/page/grokipedia-search?q=gate+oxide+semiconductor" },
         { title: "Field-Effect Transistor", url: "https://grokipedia.com/page/grokipedia-search?q=field+effect+transistor" },
-      ]
+      ],
+      image_prompt: "photorealistic 3D cutaway of a MOSFET transistor with clearly labeled source, drain, gate, gate oxide layer, and silicon substrate, channel region illuminated, high-tech blueprint aesthetic, dark background, technical illustration style"
     },
     {
       level: 7,
@@ -76,7 +82,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Threshold Voltage", url: "https://grokipedia.com/page/grokipedia-search?q=threshold+voltage+MOSFET" },
         { title: "Inversion Layer", url: "https://grokipedia.com/page/grokipedia-search?q=inversion+layer+semiconductor" },
         { title: "Subthreshold Conduction", url: "https://grokipedia.com/page/grokipedia-search?q=subthreshold+conduction+transistor" },
-      ]
+      ],
+      image_prompt: "close-up scientific visualization of a MOSFET channel forming an inversion layer of glowing electrons between source and drain regions, gate voltage field lines streaming downward, dark background with bright cyan highlights, photorealistic educational style"
     },
     {
       level: 8,
@@ -87,7 +94,8 @@ export const TRANSISTOR_EXAMPLE = {
         { title: "Transistor", url: "https://grokipedia.com/page/grokipedia-search?q=transistor" },
         { title: "Digital Logic", url: "https://grokipedia.com/page/grokipedia-search?q=digital+logic+gates" },
         { title: "Amplifier", url: "https://grokipedia.com/page/grokipedia-search?q=amplifier+transistor" },
-      ]
+      ],
+      image_prompt: "macro photograph style visualization of a modern CPU die surface with billions of microscopic transistors, glowing binary signal patterns flowing through circuit traces, dramatic blue lighting, futuristic and detailed"
     }
   ],
   mermaid_flowchart: `flowchart LR
@@ -105,25 +113,11 @@ export const TRANSISTOR_EXAMPLE = {
       why_exists: "As gate oxides shrink below 1nm to increase transistor density, quantum tunneling causes unacceptable leakage current, wasting power and generating heat even when transistors are 'off'.",
       innovation_potential: "New high-k dielectric materials like hafnium oxide allow thicker physical layers with the same electrical effect, dramatically reducing leakage. Further innovation needed for 2D material gates.",
       search_query: "companies developing high-k dielectric materials transistor gate oxide 2025",
+      image_prompt: "microscopic visualization of quantum electron tunneling through an ultra-thin 1nm hafnium oxide gate barrier, electrons rendered as wavefunctions glowing through the film, futuristic semiconductor lab aesthetic, dramatic blue lighting",
       public_companies: [
-        {
-          name: "Applied Materials",
-          ticker: "AMAT",
-          exchange: "NASDAQ",
-          relevance: "World leader in atomic-layer deposition equipment used to deposit high-k gate dielectrics like HfO2 at sub-1nm precision."
-        },
-        {
-          name: "Lam Research",
-          ticker: "LRCX",
-          exchange: "NASDAQ",
-          relevance: "Provides the etch and deposition systems critical for forming ultra-thin gate oxide stacks in advanced logic nodes."
-        },
-        {
-          name: "ASML Holding",
-          ticker: "ASML",
-          exchange: "NASDAQ",
-          relevance: "Sole supplier of EUV lithography machines that define the gate structures requiring sub-1nm dielectric control."
-        }
+        { name: "Applied Materials", ticker: "AMAT", exchange: "NASDAQ", relevance: "World leader in atomic-layer deposition equipment used to deposit high-k gate dielectrics like HfO2 at sub-1nm precision." },
+        { name: "Lam Research", ticker: "LRCX", exchange: "NASDAQ", relevance: "Provides the etch and deposition systems critical for forming ultra-thin gate oxide stacks in advanced logic nodes." },
+        { name: "ASML Holding", ticker: "ASML", exchange: "NASDAQ", relevance: "Sole supplier of EUV lithography machines that define the gate structures requiring sub-1nm dielectric control." }
       ]
     },
     {
@@ -131,25 +125,11 @@ export const TRANSISTOR_EXAMPLE = {
       why_exists: "Horizontal scaling has nearly ended — Moore's Law continuation now requires stacking transistors vertically, but heat dissipation from buried layers becomes catastrophic without new cooling architectures.",
       innovation_potential: "Monolithic 3D ICs with buried power rails and microfluidic cooling could enable 100x density gains. Startups developing direct liquid cooling for 3D chiplets are gaining traction.",
       search_query: "companies monolithic 3D IC stacking transistor cooling startup 2025",
+      image_prompt: "futuristic 3D stacked silicon chiplet with multiple translucent silicon layers connected by glowing through-silicon vias, microfluidic cooling channels with cyan liquid, dramatic dark background, sci-fi technical concept art",
       public_companies: [
-        {
-          name: "Taiwan Semiconductor Manufacturing",
-          ticker: "TSM",
-          exchange: "NYSE",
-          relevance: "Leads 3D chip stacking with SoIC and CoWoS packaging technologies used in AI accelerators and advanced logic."
-        },
-        {
-          name: "SK Hynix",
-          ticker: "000660",
-          exchange: "KRX",
-          relevance: "Pioneers High Bandwidth Memory (HBM) stacking that connects memory dies vertically via through-silicon vias."
-        },
-        {
-          name: "Advanced Micro Devices",
-          ticker: "AMD",
-          exchange: "NASDAQ",
-          relevance: "Commercialized chiplet architecture with 3D V-Cache stacking, doubling L3 cache density for CPUs and GPUs."
-        }
+        { name: "Taiwan Semiconductor Manufacturing", ticker: "TSM", exchange: "NYSE", relevance: "Leads 3D chip stacking with SoIC and CoWoS packaging technologies used in AI accelerators and advanced logic." },
+        { name: "SK Hynix", ticker: "000660", exchange: "KRX", relevance: "Pioneers High Bandwidth Memory (HBM) stacking that connects memory dies vertically via through-silicon vias." },
+        { name: "Advanced Micro Devices", ticker: "AMD", exchange: "NASDAQ", relevance: "Commercialized chiplet architecture with 3D V-Cache stacking, doubling L3 cache density for CPUs and GPUs." }
       ]
     },
     {
@@ -157,25 +137,11 @@ export const TRANSISTOR_EXAMPLE = {
       why_exists: "Silicon's band gap and carrier mobility are approaching fundamental limits at atomic scales. 2D materials like MoS2 and graphene have superior properties but are nearly impossible to manufacture reliably at scale.",
       innovation_potential: "A manufacturable 2D channel material could extend transistor scaling by a decade. Companies achieving wafer-scale deposition of defect-free 2D materials will unlock atomic-scale switching.",
       search_query: "companies developing 2D transistor materials MoS2 graphene semiconductor 2025",
+      image_prompt: "atomic-scale visualization of a monolayer MoS2 2D material transistor on a flexible substrate, hexagonal lattice glowing, performance metrics overlaid as holographic UI, sci-fi laboratory aesthetic, blue and purple tones",
       public_companies: [
-        {
-          name: "Applied Materials",
-          ticker: "AMAT",
-          exchange: "NASDAQ",
-          relevance: "Developing CVD and ALD tools capable of depositing monolayer MoS2 and other TMDs at wafer scale."
-        },
-        {
-          name: "Tokyo Electron",
-          ticker: "TOELY",
-          exchange: "OTCMKTS",
-          relevance: "Leading Japanese equipment maker advancing thin-film deposition systems adaptable to 2D material growth."
-        },
-        {
-          name: "Intel",
-          ticker: "INTC",
-          exchange: "NASDAQ",
-          relevance: "Actively researching 2D channel transistors (RibbonFETs) and has published roadmaps incorporating 2D materials post-2nm."
-        }
+        { name: "Applied Materials", ticker: "AMAT", exchange: "NASDAQ", relevance: "Developing CVD and ALD tools capable of depositing monolayer MoS2 and other TMDs at wafer scale." },
+        { name: "Tokyo Electron", ticker: "TOELY", exchange: "OTCMKTS", relevance: "Leading Japanese equipment maker advancing thin-film deposition systems adaptable to 2D material growth." },
+        { name: "Intel", ticker: "INTC", exchange: "NASDAQ", relevance: "Actively researching 2D channel transistors (RibbonFETs) and has published roadmaps incorporating 2D materials post-2nm." }
       ]
     },
     {
@@ -183,25 +149,11 @@ export const TRANSISTOR_EXAMPLE = {
       why_exists: "Digital binary switching wastes enormous energy on operations that biological neurons perform with milliwatts. Transistors operating in the analog domain for AI inference remain difficult to program and manufacture reliably.",
       innovation_potential: "Analog in-memory computing using memristors or phase-change materials could enable 1000x energy efficiency for AI workloads, eliminating the von Neumann bottleneck entirely.",
       search_query: "companies neuromorphic analog compute memristor in-memory computing startup 2025",
+      image_prompt: "futuristic neuromorphic compute chip with neural-network synapse patterns glowing across the silicon die, biological neuron silhouette overlaid for comparison, bioluminescent green and cyan aesthetic, dramatic dark scene",
       public_companies: [
-        {
-          name: "Intel",
-          ticker: "INTC",
-          exchange: "NASDAQ",
-          relevance: "Developed Loihi 2, a research neuromorphic chip with 1 million neurons, used for adaptive AI at the edge."
-        },
-        {
-          name: "International Business Machines",
-          ticker: "IBM",
-          exchange: "NYSE",
-          relevance: "Pioneering phase-change memory and analog AI chips that perform matrix multiplication in the memory array itself."
-        },
-        {
-          name: "Qualcomm",
-          ticker: "QCOM",
-          exchange: "NASDAQ",
-          relevance: "Shipping on-device AI inference chips (Hexagon NPU) that bring analog-inspired computing to billions of handsets."
-        }
+        { name: "Intel", ticker: "INTC", exchange: "NASDAQ", relevance: "Developed Loihi 2, a research neuromorphic chip with 1 million neurons, used for adaptive AI at the edge." },
+        { name: "International Business Machines", ticker: "IBM", exchange: "NYSE", relevance: "Pioneering phase-change memory and analog AI chips that perform matrix multiplication in the memory array itself." },
+        { name: "Qualcomm", ticker: "QCOM", exchange: "NASDAQ", relevance: "Shipping on-device AI inference chips (Hexagon NPU) that bring analog-inspired computing to billions of handsets." }
       ]
     },
     {
@@ -209,25 +161,11 @@ export const TRANSISTOR_EXAMPLE = {
       why_exists: "Conventional transistors control charge flow, but electron spin is an untapped degree of freedom. Spin-based logic could operate at room temperature with near-zero switching energy, but spin coherence remains too short for practical circuits.",
       innovation_potential: "If spin coherence can be maintained across thousands of gate operations at room temperature, spintronic logic would enable non-volatile, ultra-low-power computing that retains state without power.",
       search_query: "companies spintronics spin transistor room temperature non-volatile computing 2025",
+      image_prompt: "concept art of a spintronic transistor showing electron spin states as glowing up and down arrows in stacked magnetic layers, quantum spin transport flowing across the device, dramatic violet and indigo lighting, futuristic sci-fi aesthetic",
       public_companies: [
-        {
-          name: "Western Digital",
-          ticker: "WDC",
-          exchange: "NASDAQ",
-          relevance: "Already deploys spintronic read heads (TMR sensors) in HDDs and is researching spin-torque MRAM for storage."
-        },
-        {
-          name: "Seagate Technology",
-          ticker: "STX",
-          exchange: "NASDAQ",
-          relevance: "Uses giant magnetoresistance (GMR) in all its drives and funds research into spin-orbit torque switching devices."
-        },
-        {
-          name: "Everspin Technologies",
-          ticker: "MRAM",
-          exchange: "NASDAQ",
-          relevance: "Only pure-play public company shipping MRAM (spin-torque magnetic memory) — the first commercial spintronic compute memory."
-        }
+        { name: "Western Digital", ticker: "WDC", exchange: "NASDAQ", relevance: "Already deploys spintronic read heads (TMR sensors) in HDDs and is researching spin-torque MRAM for storage." },
+        { name: "Seagate Technology", ticker: "STX", exchange: "NASDAQ", relevance: "Uses giant magnetoresistance (GMR) in all its drives and funds research into spin-orbit torque switching devices." },
+        { name: "Everspin Technologies", ticker: "MRAM", exchange: "NASDAQ", relevance: "Only pure-play public company shipping MRAM (spin-torque magnetic memory) — the first commercial spintronic compute memory." }
       ]
     }
   ]

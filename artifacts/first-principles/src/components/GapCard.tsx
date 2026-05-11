@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { ExternalLink, Lightbulb, AlertCircle, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
-import type { Gap } from "../types";
+import type { Gap, ImageEntry } from "../types";
+import { ImageBlock } from "./ImageBlock";
 
 interface GapCardProps {
   gap: Gap;
   index: number;
+  imageEntry?: ImageEntry;
+  onRegenerateImage?: () => void;
 }
 
 const GAP_COLORS = [
@@ -26,7 +29,7 @@ const EXCHANGES: Record<string, string> = {
   OTCMKTS: "OTC",
 };
 
-export function GapCard({ gap, index }: GapCardProps) {
+export function GapCard({ gap, index, imageEntry, onRegenerateImage }: GapCardProps) {
   const [showCompanies, setShowCompanies] = useState(true);
 
   function handleFindCompanies() {
@@ -55,6 +58,16 @@ export function GapCard({ gap, index }: GapCardProps) {
           <p className="text-xs text-[hsl(215.4_16.3%_46.9%)] mt-0.5">Gap #{index + 1}</p>
         </div>
       </div>
+
+      {/* Generated image */}
+      {imageEntry && onRegenerateImage && (
+        <ImageBlock
+          imageEntry={imageEntry}
+          onRegenerate={onRegenerateImage}
+          caption={gap.gap_title}
+          compact
+        />
+      )}
 
       {/* Why it exists */}
       <div className="space-y-3">

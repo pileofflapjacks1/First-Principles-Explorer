@@ -3,12 +3,19 @@ export interface WikiLink {
   url: string;
 }
 
+export interface ImageEntry {
+  url: string | null;
+  loading: boolean;
+  error: boolean;
+}
+
 export interface BreakdownLevel {
   level: number;
   title: string;
   description: string;
   components: string[];
   wiki_links: WikiLink[];
+  image_prompt: string;
 }
 
 export interface PublicCompany {
@@ -24,6 +31,7 @@ export interface Gap {
   innovation_potential: string;
   search_query: string;
   public_companies: PublicCompany[];
+  image_prompt: string;
 }
 
 export interface BreakdownResult {

@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from "react";
-import { Atom, Plus, Download, Copy, Check, RefreshCw, Key } from "lucide-react";
-import type { BreakdownResult } from "../types";
-import { generateBreakdown, regenerateGaps } from "../lib/grok";
+import { useState, useRef } from "react";
+import { Atom, Plus, Download, Copy, Check, RefreshCw, Key, Sparkles } from "lucide-react";
+import type { BreakdownResult, ImageEntry } from "../types";
+import { generateBreakdown, regenerateGaps, generateImage } from "../lib/grok";
 import { TRANSISTOR_EXAMPLE } from "../data/transistorExample";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { AtomSpinner } from "../components/AtomSpinner";
@@ -18,6 +18,9 @@ const EXAMPLE_PROMPTS = [
   "How does a nuclear reactor work",
 ];
 
+const breakdownKey = (level: number) => `breakdown-${level}`;
+const gapKey = (index: number) => `gap-${index}`;
+
 export function Home() {
   const [apiKey, setApiKey] = useState<string>(
     () => localStorage.getItem("xai_api_key") ?? ""
@@ -31,12 +34,100 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [images, setImages] = useState<Record<string, ImageEntry>>({});
   const breakdownRef = useRef<HTMLDivElement>(null);
+  // Monotonic generation ID so background image promises from a previous
+  // breakdown can't leak into the state of a new one.
+  const generationRef = useRef(0);
 
   function handleApiKeySave(key: string) {
     setApiKey(key);
     setShowApiModal(false);
     setShowApiEdit(false);
+  }
+
+  function setImageEntry(key: string, patch: Partial<ImageEntry>) {
+    setImages((prev) => ({
+      ...prev,
+      [key]: {
+        url: prev[key]?.url ?? null,
+        loading: prev[key]?.loading ?? false,
+        error: prev[key]?.error ?? false,
+        ...patch,
+      },
+    }));
+  }
+
+  async function generateOne(
+    key: string,
+    prompt: string,
+    currentApiKey: string,
+    genId: number
+  ) {
+    if (generationRef.current !== genId) return;
+    setImageEntry(key, { loading: true, error: false, url: null });
+    try {
+      const url = await generateImage(prompt, currentApiKey);
+      if (generationRef.current !== genId) return;
+      setImageEntry(key, { url, loading: false, error: false });
+    } catch {
+      if (generationRef.current !== genId) return;
+      setImageEntry(key, { loading: false, error: true, url: null });
+    }
+  }
+
+  async function generateAllImages(data: BreakdownResult, currentApiKey: string) {
+    if (!currentApiKey) return;
+    const genId = ++generationRef.current;
+
+    // Initialize all entries as loading so skeletons show immediately
+    const initial: Record<string, ImageEntry> = {};
+    data.breakdown.forEach((b) => {
+      if (b.image_prompt) initial[breakdownKey(b.level)] = { url: null, loading: true, error: false };
+    });
+    data.gaps.forEach((g, i) => {
+      if (g.image_prompt) initial[gapKey(i)] = { url: null, loading: true, error: false };
+    });
+    setImages(initial);
+
+    // Fire all in parallel; allSettled so individual failures don't stop the rest.
+    // Each completion checks genId to avoid leaking into a newer breakdown's state.
+    const tasks: Promise<unknown>[] = [];
+    data.breakdown.forEach((b) => {
+      if (b.image_prompt) {
+        tasks.push(
+          generateImage(b.image_prompt, currentApiKey)
+            .then((url) => {
+              if (generationRef.current === genId) {
+                setImageEntry(breakdownKey(b.level), { url, loading: false, error: false });
+              }
+            })
+            .catch(() => {
+              if (generationRef.current === genId) {
+                setImageEntry(breakdownKey(b.level), { loading: false, error: true, url: null });
+              }
+            })
+        );
+      }
+    });
+    data.gaps.forEach((g, i) => {
+      if (g.image_prompt) {
+        tasks.push(
+          generateImage(g.image_prompt, currentApiKey)
+            .then((url) => {
+              if (generationRef.current === genId) {
+                setImageEntry(gapKey(i), { url, loading: false, error: false });
+              }
+            })
+            .catch(() => {
+              if (generationRef.current === genId) {
+                setImageEntry(gapKey(i), { loading: false, error: true, url: null });
+              }
+            })
+        );
+      }
+    });
+    await Promise.allSettled(tasks);
   }
 
   async function handleSubmit(customPrompt?: string) {
@@ -52,10 +143,15 @@ export function Home() {
     setError(null);
     setResult(null);
     setActiveCardId(null);
+    setImages({});
+    // Invalidate any in-flight image generations from a previous breakdown
+    generationRef.current++;
 
     try {
       const data = await generateBreakdown(topic, apiKey);
       setResult(data);
+      // Fire image generation in background (non-blocking for UI render)
+      void generateAllImages(data, apiKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -68,12 +164,43 @@ export function Home() {
     setLoadingGaps(true);
     try {
       const gaps = await regenerateGaps(result.topic, result.breakdown, apiKey);
-      setResult({ ...result, gaps });
+      const newResult = { ...result, gaps };
+      setResult(newResult);
+
+      // Clear old gap images and regenerate
+      setImages((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((k) => { if (k.startsWith("gap-")) delete next[k]; });
+        return next;
+      });
+      // Generate fresh gap images in parallel under the current generation
+      const genId = generationRef.current;
+      gaps.forEach((g, i) => {
+        if (g.image_prompt) {
+          void generateOne(gapKey(i), g.image_prompt, apiKey, genId);
+        }
+      });
     } catch {
       // silently fail — keep existing gaps
     } finally {
       setLoadingGaps(false);
     }
+  }
+
+  function handleRegenerateBreakdownImage(level: number, imagePrompt: string) {
+    if (!apiKey) {
+      setShowApiModal(true);
+      return;
+    }
+    void generateOne(breakdownKey(level), imagePrompt, apiKey, generationRef.current);
+  }
+
+  function handleRegenerateGapImage(index: number, imagePrompt: string) {
+    if (!apiKey) {
+      setShowApiModal(true);
+      return;
+    }
+    void generateOne(gapKey(index), imagePrompt, apiKey, generationRef.current);
   }
 
   function handleNodeClick(label: string) {
@@ -116,6 +243,12 @@ export function Home() {
     setResult(TRANSISTOR_EXAMPLE);
     setPrompt(TRANSISTOR_EXAMPLE.topic);
     setError(null);
+    setImages({});
+    generationRef.current++;
+    // If user has an API key, generate images for the example too
+    if (apiKey) {
+      void generateAllImages(TRANSISTOR_EXAMPLE, apiKey);
+    }
   }
 
   const hasResult = result !== null;
@@ -152,6 +285,8 @@ export function Home() {
                   setPrompt("");
                   setError(null);
                   setActiveCardId(null);
+                  setImages({});
+                  generationRef.current++;
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[hsl(216_34%_17%)] hover:bg-[hsl(216_34%_22%)] transition-colors border border-[hsl(216_34%_25%)]"
               >
@@ -169,7 +304,7 @@ export function Home() {
           <div className="text-center space-y-3">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(210_100%_66%/0.1)] border border-[hsl(210_100%_66%/0.2)] text-xs text-[hsl(210_100%_80%)] mb-2">
               <Atom className="w-3 h-3" />
-              Powered by xAI Grok
+              Powered by xAI Grok + Grok Imagine
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-br from-white via-[hsl(213_31%_80%)] to-[hsl(210_100%_66%)] bg-clip-text text-transparent">
               Understand anything
@@ -177,7 +312,7 @@ export function Home() {
             </h1>
             <p className="text-[hsl(215.4_16.3%_56.9%)] text-lg">
               Type a topic and get a hierarchical breakdown from atoms upward,
-              with an interactive flowchart and innovation gaps.
+              with an interactive flowchart, AI-generated visuals, and innovation gaps.
             </p>
           </div>
 
@@ -292,6 +427,14 @@ export function Home() {
             </div>
           </div>
 
+          {/* Visuals notice */}
+          {Object.keys(images).length > 0 && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[hsl(280_65%_60%/0.1)] border border-[hsl(280_65%_60%/0.25)] text-[10px] text-[hsl(280_65%_80%)]">
+              <Sparkles className="w-3 h-3" />
+              Visuals generated on-the-fly with xAI Grok Imagine
+            </div>
+          )}
+
           {/* Flow Diagram — full width at top */}
           <div>
             <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
@@ -332,6 +475,8 @@ export function Home() {
                     item={item}
                     isActive={activeCardId === id}
                     defaultOpen={item.level <= 2}
+                    imageEntry={images[breakdownKey(item.level)]}
+                    onRegenerateImage={() => handleRegenerateBreakdownImage(item.level, item.image_prompt)}
                   />
                 );
               })}
@@ -369,7 +514,13 @@ export function Home() {
             {!loadingGaps && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {result.gaps.map((gap, i) => (
-                  <GapCard key={i} gap={gap} index={i} />
+                  <GapCard
+                    key={i}
+                    gap={gap}
+                    index={i}
+                    imageEntry={images[gapKey(i)]}
+                    onRegenerateImage={() => handleRegenerateGapImage(i, gap.image_prompt)}
+                  />
                 ))}
               </div>
             )}
@@ -378,7 +529,7 @@ export function Home() {
           {/* Footer actions */}
           <div className="border-t border-[hsl(216_34%_17%)] pt-6 flex flex-wrap gap-3 items-center justify-between">
             <p className="text-xs text-[hsl(215.4_16.3%_36.9%)]">
-              Generated with xAI Grok · FirstPrinciples Explorer
+              Generated with xAI Grok + Grok Imagine · FirstPrinciples Explorer
             </p>
             <div className="flex gap-2">
               <button

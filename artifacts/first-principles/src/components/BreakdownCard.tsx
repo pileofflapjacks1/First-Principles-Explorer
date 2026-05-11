@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, BookOpen, ExternalLink } from "lucide-react";
-import type { BreakdownLevel } from "../types";
+import type { BreakdownLevel, ImageEntry } from "../types";
+import { ImageBlock } from "./ImageBlock";
 
 const LEVEL_COLORS = [
   { badge: "bg-[hsl(280_65%_60%/0.15)] text-[hsl(280_65%_75%)] border-[hsl(280_65%_60%/0.3)]", dot: "bg-[hsl(280_65%_60%)]", wiki: "text-[hsl(280_65%_70%)] hover:text-[hsl(280_65%_85%)] border-[hsl(280_65%_60%/0.25)] hover:border-[hsl(280_65%_60%/0.5)] hover:bg-[hsl(280_65%_60%/0.08)]" },
@@ -15,9 +16,11 @@ interface BreakdownCardProps {
   isActive: boolean;
   defaultOpen?: boolean;
   id: string;
+  imageEntry?: ImageEntry;
+  onRegenerateImage?: () => void;
 }
 
-export function BreakdownCard({ item, isActive, defaultOpen, id }: BreakdownCardProps) {
+export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, onRegenerateImage }: BreakdownCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen ?? item.level === 1);
   const color = LEVEL_COLORS[(item.level - 1) % LEVEL_COLORS.length];
   const links = item.wiki_links ?? [];
@@ -51,6 +54,15 @@ export function BreakdownCard({ item, isActive, defaultOpen, id }: BreakdownCard
           <p className="text-[hsl(215.4_16.3%_66.9%)] text-sm leading-relaxed">
             {item.description}
           </p>
+
+          {/* Generated image */}
+          {imageEntry && onRegenerateImage && (
+            <ImageBlock
+              imageEntry={imageEntry}
+              onRegenerate={onRegenerateImage}
+              caption={item.title}
+            />
+          )}
 
           {/* Sub-components */}
           <div className="flex flex-wrap gap-1.5">

@@ -16,7 +16,8 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
           "title": "string (short descriptive label for the concept)",
           "url": "string (Grokipedia search URL in the format: https://grokipedia.com/page/grokipedia-search?q=SEARCH+TERMS where SEARCH+TERMS is the concept URL-encoded)"
         }
-      ] (2-3 Grokipedia search links for concepts most relevant to this level — encode spaces as + in the query string)
+      ] (2-3 Grokipedia search links for concepts most relevant to this level — encode spaces as + in the query string),
+      "image_prompt": "string (a detailed image-generation prompt that visually explains THIS specific level. Aim for photorealistic scientific illustrations, cutaway diagrams, or educational infographics. Include style hints like 'photorealistic', 'cutaway diagram', 'high contrast dark background', 'glowing labels'. 1-2 sentences, ~30 words. Example: 'photorealistic cutaway diagram of a P-N junction showing depletion region as a translucent zone, charge carriers as glowing spheres, electric field arrows, dark background, educational style, high contrast')"
     }
   ],
   "mermaid_flowchart": "string (valid Mermaid flowchart LR syntax, 6-10 nodes)",
@@ -27,6 +28,7 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
       "why_exists": "string",
       "innovation_potential": "string",
       "search_query": "string",
+      "image_prompt": "string (a detailed image-generation prompt visualizing THIS innovation gap. Concept-art / futuristic / dramatic lighting style. 1-2 sentences, ~30 words. Example: 'futuristic 2D material transistor prototype on flexible substrate with performance metrics overlaid as holographic UI, dramatic blue and purple lighting, sci-fi laboratory aesthetic')",
       "public_companies": [
         {
           "name": "string (full company name)",
@@ -59,7 +61,7 @@ export async function generateBreakdown(
         },
       ],
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 5000,
     }),
   });
 
@@ -118,11 +120,11 @@ export async function regenerateGaps(
         },
         {
           role: "user",
-          content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdown.map((b) => b.title).join(", ")}\n\nReturn ONLY a JSON array:\n[\n  {\n    "gap_title": "string",\n    "why_exists": "string",\n    "innovation_potential": "string",\n    "search_query": "string (Google-style query for companies working on this)",\n    "public_companies": [\n      {\n        "name": "string (full company name)",\n        "ticker": "string (stock ticker)",\n        "exchange": "string (NASDAQ, NYSE, etc.)",\n        "relevance": "string (1 sentence on how they are involved in this gap)"\n      }\n    ]\n  }\n]`,
+          content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdown.map((b) => b.title).join(", ")}\n\nReturn ONLY a JSON array:\n[\n  {\n    "gap_title": "string",\n    "why_exists": "string",\n    "innovation_potential": "string",\n    "search_query": "string (Google-style query for companies working on this)",\n    "image_prompt": "string (futuristic concept-art image-gen prompt visualizing this gap, ~30 words)",\n    "public_companies": [\n      {\n        "name": "string (full company name)",\n        "ticker": "string (stock ticker)",\n        "exchange": "string (NASDAQ, NYSE, etc.)",\n        "relevance": "string (1 sentence on how they are involved in this gap)"\n      }\n    ]\n  }\n]`,
         },
       ],
       temperature: 0.9,
-      max_tokens: 2000,
+      max_tokens: 2500,
     }),
   });
 
@@ -145,4 +147,35 @@ export async function regenerateGaps(
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
     throw new Error("Failed to parse gaps response");
   }
+}
+
+export async function generateImage(
+  prompt: string,
+  apiKey: string
+): Promise<string> {
+  const response = await fetch("https://api.x.ai/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "grok-imagine-image-quality",
+      prompt,
+      n: 1,
+      response_format: "url",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Image API error (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  const url = data?.data?.[0]?.url;
+  if (!url) {
+    throw new Error("Image API returned no URL");
+  }
+  return url;
 }

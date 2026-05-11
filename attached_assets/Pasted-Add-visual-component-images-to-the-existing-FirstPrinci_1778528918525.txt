@@ -1,0 +1,30 @@
+Add visual component images to the existing FirstPrinciples Explorer React app using xAI Grok Imagine.
+
+Technical requirements (use exactly):
+- Same XAI_API_KEY already in the app.
+- New image generation endpoint: https://api.x.ai/v1/images/generations
+- Model: "grok-imagine-image-quality"
+- Request body example: { "model": "grok-imagine-image-quality", "prompt": "...", "n": 1, "size": "1024x1024", "response_format": "url" }
+
+Update the JSON schema (force Grok-4.3 to return this):
+Add to each item in "breakdown" array:
+  "image_prompt": "string (detailed prompt optimized for Grok Imagine — e.g. 'photorealistic cutaway diagram of a bipolar junction transistor showing emitter, base, collector regions with clear labels, silicon substrate visible, educational style, high contrast')"
+
+Add to each item in "gaps" array:
+  "image_prompt": "string (visual of the gap/opportunity — e.g. 'futuristic 2D material transistor prototype on flexible substrate with performance metrics overlaid')"
+
+Frontend changes:
+- After receiving JSON, automatically generate images for every breakdown level and every gap (parallel fetch, show skeleton loaders).
+- In each accordion card (breakdown), add a large centered <img> with Tailwind styling + a caption "Generated with Grok Imagine".
+- Make images clickable to open full-size in new tab.
+- Add a small toggle "Regenerate Image" per card that re-calls the image API with the same prompt.
+- In the flowchart, optionally show a small thumbnail preview on hover (nice-to-have).
+- Add a note in the UI: "Visuals generated on-the-fly with xAI Grok Imagine".
+
+UI/UX polish:
+- Beautiful image cards with subtle borders and labels.
+- Loading state: animated atom spinner over the image slot.
+- Error fallback: "Image generation failed — retry" button.
+- Respect Free vs Pro: Free tier shows only the top-level image; Pro shows all.
+
+Deliver all changes in one go. Do not break existing text/flowchart/gaps logic. Keep it fast and mobile-friendly. Update README with the new feature description.
