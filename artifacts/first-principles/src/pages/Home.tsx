@@ -32,6 +32,7 @@ import { AtomSpinner } from "../components/AtomSpinner";
 import { BreakdownCard } from "../components/BreakdownCard";
 import { MermaidChart } from "../components/MermaidChart";
 import { GapCard } from "../components/GapCard";
+import { UpgradePrompt } from "../components/UpgradePrompt";
 
 const EXAMPLE_PROMPTS = [
   "How does a transistor work",
@@ -587,26 +588,41 @@ export function Home() {
                   Concrete frontiers where breakthroughs are needed
                 </p>
               </div>
-              <button
-                onClick={handleRegenerateGaps}
-                disabled={loadingGaps}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(216_34%_17%)] text-xs text-[hsl(215.4_16.3%_66.9%)] transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingGaps ? "animate-spin" : ""}`} />
-                Regenerate Gaps
-              </button>
+              {isPro && (
+                <button
+                  onClick={handleRegenerateGaps}
+                  disabled={loadingGaps}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(216_34%_17%)] text-xs text-[hsl(215.4_16.3%_66.9%)] transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingGaps ? "animate-spin" : ""}`} />
+                  Regenerate Gaps
+                </button>
+              )}
             </div>
 
-            {loadingGaps && (
+            {!isPro && upsellReason !== null ? (
+              <UpgradePrompt
+                reason={upsellReason}
+                fullWidth
+                title={
+                  upsellReason === "signed-out"
+                    ? "Sign in to unlock innovation gaps"
+                    : "Innovation gaps are a Pro feature"
+                }
+                body={
+                  upsellReason === "signed-out"
+                    ? "Create a free account, then upgrade to Pro to see concrete innovation gaps with the public companies positioned to capture them."
+                    : "Upgrade to Pro to see concrete innovation gaps for this topic, complete with publicly traded companies positioned in each one."
+                }
+              />
+            ) : loadingGaps ? (
               <div className="flex items-center justify-center py-8">
                 <div className="flex items-center gap-2 text-[hsl(215.4_16.3%_56.9%)] text-sm">
                   <div className="w-4 h-4 border-2 border-[hsl(210_100%_66%)] border-t-transparent rounded-full animate-spin" />
                   Finding new innovation gaps...
                 </div>
               </div>
-            )}
-
-            {!loadingGaps && (
+            ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {result.gaps.map((gap, i) => (
                   <GapCard

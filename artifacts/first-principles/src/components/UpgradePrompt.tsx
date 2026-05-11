@@ -5,12 +5,36 @@ import { Show, useClerk } from "@clerk/react";
 interface UpgradePromptProps {
   compact?: boolean;
   reason: "signed-out" | "free-tier";
+  title?: string;
+  body?: string;
+  fullWidth?: boolean;
 }
 
-export function UpgradePrompt({ compact, reason }: UpgradePromptProps) {
-  const aspect = compact ? "aspect-[4/3]" : "aspect-video";
+export function UpgradePrompt({
+  compact,
+  reason,
+  title,
+  body,
+  fullWidth,
+}: UpgradePromptProps) {
+  const aspect = fullWidth
+    ? "min-h-[14rem]"
+    : compact
+      ? "aspect-[4/3]"
+      : "aspect-video";
   const { openSignIn } = useClerk();
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+  const resolvedTitle =
+    title ??
+    (reason === "signed-out"
+      ? "Sign in to unlock visuals"
+      : "AI visuals are a Pro feature");
+  const resolvedBody =
+    body ??
+    (reason === "signed-out"
+      ? "Create a free account, then upgrade to Pro for Grok Imagine visuals."
+      : "Upgrade to Pro and we'll generate images for every level and gap.");
 
   return (
     <div
@@ -25,15 +49,19 @@ export function UpgradePrompt({ compact, reason }: UpgradePromptProps) {
         )}
       </div>
       <div className="relative space-y-0.5">
-        <p className="text-xs font-semibold text-[hsl(213_31%_91%)]">
-          {reason === "signed-out"
-            ? "Sign in to unlock visuals"
-            : "AI visuals are a Pro feature"}
+        <p
+          className={`font-semibold text-[hsl(213_31%_91%)] ${
+            fullWidth ? "text-base" : "text-xs"
+          }`}
+        >
+          {resolvedTitle}
         </p>
-        <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)] max-w-[16rem]">
-          {reason === "signed-out"
-            ? "Create a free account, then upgrade to Pro for Grok Imagine visuals."
-            : "Upgrade to Pro and we'll generate images for every level and gap."}
+        <p
+          className={`text-[hsl(215.4_16.3%_56.9%)] ${
+            fullWidth ? "text-sm max-w-md" : "text-[10px] max-w-[16rem]"
+          }`}
+        >
+          {resolvedBody}
         </p>
       </div>
       <Show when="signed-out">

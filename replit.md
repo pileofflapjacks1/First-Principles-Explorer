@@ -41,7 +41,7 @@ Type any topic ("how does a transistor work", "lithium-ion battery", etc.) and g
 
 1. A hierarchical first-principles breakdown (atoms → application).
 2. An interactive Mermaid flowchart with clickable nodes that scroll to matching cards.
-3. Innovation-gap cards with real publicly traded companies positioned in each gap.
+3. (Pro) Innovation-gap cards with real publicly traded companies positioned in each gap.
 4. Grokipedia "learn more" links for every level.
 5. (Pro) AI concept-art images on every level and every gap, with one-click regenerate.
 

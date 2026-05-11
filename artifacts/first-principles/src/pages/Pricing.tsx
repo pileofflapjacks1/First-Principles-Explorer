@@ -72,11 +72,12 @@ export function Pricing() {
             Plans
           </div>
           <h1 className="text-4xl font-bold tracking-tight">
-            Unlock AI visuals for every breakdown
+            Unlock the full first-principles experience
           </h1>
           <p className="text-[hsl(215.4_16.3%_66.9%)] text-base">
-            Free covers the text breakdown, flowchart, gaps and Grokipedia
-            links. Pro adds Grok Imagine visuals on every level and gap.
+            Free covers the text breakdown, flowchart and Grokipedia links.
+            Pro adds innovation-gap analysis with publicly traded companies,
+            plus Grok Imagine visuals on every level and gap.
           </p>
         </div>
 
@@ -95,8 +96,8 @@ export function Pricing() {
             <ul className="space-y-2 text-sm text-[hsl(215.4_16.3%_76.9%)]">
               <Feature>Hierarchical first-principles breakdown</Feature>
               <Feature>Interactive Mermaid flowchart</Feature>
-              <Feature>Innovation gap cards with public companies</Feature>
               <Feature>Grokipedia "learn more" links</Feature>
+              <Feature muted>No innovation gap analysis</Feature>
               <Feature muted>No AI image generation</Feature>
             </ul>
           </div>
@@ -162,6 +163,9 @@ export function Pricing() {
             </div>
             <ul className="space-y-2 text-sm text-[hsl(213_31%_91%)]">
               <Feature>Everything in Free</Feature>
+              <Feature highlight>
+                Innovation gap cards with publicly traded companies
+              </Feature>
               <Feature highlight>
                 Grok Imagine visuals on every breakdown level
               </Feature>
