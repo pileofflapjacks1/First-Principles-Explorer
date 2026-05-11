@@ -1,8 +1,14 @@
+export interface WikiLink {
+  title: string;
+  url: string;
+}
+
 export interface BreakdownLevel {
   level: number;
   title: string;
   description: string;
   components: string[];
+  wiki_links: WikiLink[];
 }
 
 export interface PublicCompany {

@@ -10,7 +10,13 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
       "level": number,
       "title": "string",
       "description": "string (2-4 sentences)",
-      "components": ["string", "string"]
+      "components": ["string", "string"],
+      "wiki_links": [
+        {
+          "title": "string (short Wikipedia article title)",
+          "url": "string (full https://en.wikipedia.org/wiki/... URL)"
+        }
+      ] (2-3 real Wikipedia article URLs most relevant to this specific level — use exact article titles as they appear on Wikipedia, verify the slug is correct)
     }
   ],
   "mermaid_flowchart": "string (valid Mermaid flowchart LR syntax, 6-10 nodes)",
