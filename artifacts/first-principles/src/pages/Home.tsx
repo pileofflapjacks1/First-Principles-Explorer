@@ -312,7 +312,7 @@ export function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {apiKey && (
+            {apiKey && !isPro && (
               <button
                 onClick={() => setShowApiEdit(true)}
                 title="Update API key"
