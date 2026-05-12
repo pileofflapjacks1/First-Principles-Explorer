@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
+import { validateCreditSessionToken } from "../lib/creditSession";
 import {
   GenerateProImageBody,
   GenerateProImageResponse,
@@ -32,12 +33,16 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  // Pro users and free users who have purchased topic credits may use image generation.
-  if (!user.isPro && user.topicCredits <= 0) {
-    res
-      .status(402)
-      .json({ error: "Image generation requires the Pro tier or a topic credit." });
-    return;
+  // Pro users may always generate images.
+  // Free users need a valid credit session token issued by POST /breakdown.
+  if (!user.isPro) {
+    const token = req.headers["x-credit-session"] as string | undefined;
+    if (!validateCreditSessionToken(token, user.id)) {
+      res
+        .status(402)
+        .json({ error: "Image generation requires the Pro tier or a valid credit session." });
+      return;
+    }
   }
 
   let count = user.imageCount;

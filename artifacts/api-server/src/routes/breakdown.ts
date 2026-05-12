@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { and, eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
+import { issueCreditSessionToken } from "../lib/creditSession";
 import {
   GenerateProBreakdownBody,
   RegenerateProGapsBody,
@@ -81,6 +82,11 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
 
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
+    // Issue a short-lived HMAC session token so the frontend can call /images
+    // for this breakdown without a Pro subscription. The token is valid for 2 hours.
+    if (useCredit) {
+      res.setHeader("X-Credit-Session", issueCreditSessionToken(userId));
+    }
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "xAI breakdown failed");

@@ -58,6 +58,9 @@ export function Home() {
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
+  // Stores the HMAC session token issued by /breakdown for credit users.
+  // A ref (not state) so all closures in generateOne/generateAllImages always see the latest value.
+  const creditSessionRef = useRef<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<BreakdownResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -116,7 +119,7 @@ export function Home() {
     if (generationRef.current !== genId) return;
     setImageEntry(key, { loading: true, error: false, url: null });
     try {
-      const { url } = await generateImageOnServer(imagePrompt);
+      const { url } = await generateImageOnServer(imagePrompt, creditSessionRef.current);
       if (generationRef.current !== genId) return;
       setImageEntry(key, { url, loading: false, error: false });
       void refetchAccount();
@@ -129,6 +132,8 @@ export function Home() {
   async function generateAllImages(data: BreakdownResult) {
     if (!canGenerateImages) return;
     const genId = ++generationRef.current;
+    // Capture token at the time generation starts so the closure is stable.
+    const sessionToken = creditSessionRef.current;
 
     const initial: Record<string, ImageEntry> = {};
     data.breakdown.forEach((b) => {
@@ -143,7 +148,7 @@ export function Home() {
     data.breakdown.forEach((b) => {
       if (b.image_prompt) {
         tasks.push(
-          generateImageOnServer(b.image_prompt)
+          generateImageOnServer(b.image_prompt, sessionToken)
             .then(({ url }) => {
               if (generationRef.current === genId) {
                 setImageEntry(breakdownKey(b.level), { url, loading: false, error: false });
@@ -160,7 +165,7 @@ export function Home() {
     data.gaps.forEach((g, i) => {
       if (g.image_prompt) {
         tasks.push(
-          generateImageOnServer(g.image_prompt)
+          generateImageOnServer(g.image_prompt, sessionToken)
             .then(({ url }) => {
               if (generationRef.current === genId) {
                 setImageEntry(gapKey(i), { url, loading: false, error: false });
@@ -184,24 +189,29 @@ export function Home() {
     setResult(null);
     setActiveCardId(null);
     setImages({});
-    // Reset credit session flag at the start of each new breakdown.
+    // Reset credit session at the start of each new breakdown.
+    creditSessionRef.current = null;
     setUsedCreditBreakdown(false);
     generationRef.current++;
 
     const usingCredit = useServerKey && !isPro;
 
     try {
-      const data = useServerKey
-        ? await generateBreakdownOnServer(topic)
-        : await generateBreakdown(topic, apiKey);
-      setResult(data);
-      if (usingCredit) {
-        // Mark session as credit-enabled so images are unlocked for this breakdown.
-        setUsedCreditBreakdown(true);
-        void refetchAccount();
+      let data: BreakdownResult;
+      if (useServerKey) {
+        const result = await generateBreakdownOnServer(topic);
+        data = result.data;
+        if (usingCredit && result.creditSessionToken) {
+          // Store the HMAC token so image calls can be authenticated.
+          creditSessionRef.current = result.creditSessionToken;
+          setUsedCreditBreakdown(true);
+          void refetchAccount();
+        }
+      } else {
+        data = await generateBreakdown(topic, apiKey);
       }
-      // canGenerateImages may have just become true via setUsedCreditBreakdown,
-      // so check isPro || usingCredit directly here.
+      setResult(data);
+      // canGenerateImages may have just become true; use isPro||usingCredit directly.
       if (isPro || usingCredit) {
         void generateAllImages(data);
       }

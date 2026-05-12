@@ -4,22 +4,40 @@ import type { BreakdownResult } from "../types";
 
 export async function generateImageOnServer(
   prompt: string,
+  creditSessionToken?: string | null,
 ): Promise<GeneratedImage> {
+  const headers: Record<string, string> = {};
+  if (creditSessionToken) {
+    headers["x-credit-session"] = creditSessionToken;
+  }
   return customFetch<GeneratedImage>("/api/images", {
     method: "POST",
     body: JSON.stringify({ prompt }),
     credentials: "include",
+    headers,
   });
 }
 
 export async function generateBreakdownOnServer(
   topic: string,
-): Promise<BreakdownResult> {
-  return customFetch<BreakdownResult>("/api/breakdown", {
+): Promise<{ data: BreakdownResult; creditSessionToken: string | null }> {
+  const response = await fetch("/api/breakdown", {
     method: "POST",
     body: JSON.stringify({ topic }),
     credentials: "include",
+    headers: { "content-type": "application/json" },
   });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const err = new Error(
+      (body as { error?: string }).error ?? `Server error ${response.status}`,
+    );
+    (err as Error & { status?: number }).status = response.status;
+    throw err;
+  }
+  const data: BreakdownResult = await response.json();
+  const creditSessionToken = response.headers.get("x-credit-session");
+  return { data, creditSessionToken };
 }
 
 export async function regenerateGapsOnServer(
