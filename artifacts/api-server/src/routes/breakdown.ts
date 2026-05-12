@@ -90,7 +90,8 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
     // Create a DB-backed credit session so the frontend can call /images for
-    // this specific breakdown. Image slots = number of image prompts in the result.
+    // this specific breakdown. The session ID is a random UUID stored in
+    // credit_breakdown_sessions. Image slots = number of prompts in the result.
     if (useCredit) {
       const imagesRemaining =
         data.breakdown.filter((b) => !!b.image_prompt).length +

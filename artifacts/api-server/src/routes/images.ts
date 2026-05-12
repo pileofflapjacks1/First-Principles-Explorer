@@ -64,6 +64,11 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
     const xaiKey = process.env["XAI_API_KEY"];
     if (!xaiKey) {
       req.log.error("XAI_API_KEY is not configured on the server");
+      // Refund the consumed slot so the user can retry.
+      await db
+        .update(creditBreakdownSessionsTable)
+        .set({ imagesRemaining: sql`images_remaining + 1` })
+        .where(eq(creditBreakdownSessionsTable.id, sessionId));
       res.status(500).json({ error: "Image generation is not configured on the server." });
       return;
     }
@@ -72,13 +77,17 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
       res.json(
         GenerateProImageResponse.parse({
           url,
-          // Credit users don't have a monthly counter — return 0 so the
-          // caller receives a valid response shape.
+          // Credit-session users don't share the Pro monthly counter.
           imagesGeneratedThisMonth: 0,
         }),
       );
     } catch (err) {
       req.log.error({ err }, "xAI image generation failed");
+      // Refund the slot so the user can retry without losing a breakdown image.
+      await db
+        .update(creditBreakdownSessionsTable)
+        .set({ imagesRemaining: sql`images_remaining + 1` })
+        .where(eq(creditBreakdownSessionsTable.id, sessionId));
       res.status(502).json({ error: "Image generation failed. Please try again." });
     }
     return;
