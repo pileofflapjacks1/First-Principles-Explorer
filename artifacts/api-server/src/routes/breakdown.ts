@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   GenerateProBreakdownBody,
@@ -42,20 +42,37 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
   }
   const { user } = result;
 
-  // Pro users go straight through. Credit holders get one credit consumed.
-  // Everyone else gets a 402.
-  const useCredit = !user.isPro && user.topicCredits > 0;
-  if (!user.isPro && !useCredit) {
-    res.status(402).json({
-      error: "AI breakdown requires the Pro tier or a topic credit.",
-      creditsRequired: true,
-    });
-    return;
+  // Pro users go straight through.
+  // Free users: try to atomically reserve one credit before the expensive call.
+  let useCredit = false;
+  if (!user.isPro) {
+    // Attempt atomic decrement. If no row is affected, the user has no credits.
+    const updated = await db
+      .update(usersTable)
+      .set({ topicCredits: sql`topic_credits - 1` })
+      .where(and(eq(usersTable.id, userId), sql`topic_credits > 0`))
+      .returning({ topicCredits: usersTable.topicCredits });
+
+    if (updated.length === 0) {
+      res.status(402).json({
+        error: "No credits remaining.",
+        creditsRequired: true,
+      });
+      return;
+    }
+    useCredit = true;
   }
 
   const xaiKey = process.env["XAI_API_KEY"];
   if (!xaiKey) {
     req.log.error("XAI_API_KEY is not configured on the server");
+    // Refund the reserved credit so the user is not billed for a server error.
+    if (useCredit) {
+      await db
+        .update(usersTable)
+        .set({ topicCredits: sql`topic_credits + 1` })
+        .where(eq(usersTable.id, userId));
+    }
     res
       .status(500)
       .json({ error: "AI breakdown is not configured on the server." });
@@ -64,18 +81,16 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
 
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
-
-    // Atomically decrement the credit now that the breakdown succeeded.
-    if (useCredit) {
-      await db
-        .update(usersTable)
-        .set({ topicCredits: sql`GREATEST(topic_credits - 1, 0)` })
-        .where(eq(usersTable.id, userId));
-    }
-
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "xAI breakdown failed");
+    // Refund the reserved credit so a transient API error doesn't cost the user.
+    if (useCredit) {
+      await db
+        .update(usersTable)
+        .set({ topicCredits: sql`topic_credits + 1` })
+        .where(eq(usersTable.id, userId));
+    }
     res
       .status(502)
       .json({ error: "Breakdown generation failed. Please try again." });

@@ -216,7 +216,7 @@ export function Pricing() {
 
         {/* Topic Credits section */}
         {!isPro && (
-          <div className="space-y-5">
+          <div id="credits" className="space-y-5">
             <div className="text-center space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(38_92%_50%/0.1)] border border-[hsl(38_92%_50%/0.25)] text-xs text-[hsl(38_92%_70%)]">
                 <Zap className="w-3 h-3" />
