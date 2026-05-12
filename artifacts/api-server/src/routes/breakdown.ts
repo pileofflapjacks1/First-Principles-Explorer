@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import {
   GenerateProBreakdownBody,
@@ -13,21 +13,18 @@ import {
 
 const router: IRouter = Router();
 
-async function assertPro(
+async function getUserOrFail(
   userId: string,
-): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+): Promise<
+  | { ok: true; user: typeof usersTable.$inferSelect }
+  | { ok: false; status: number; error: string; creditsRequired?: boolean }
+> {
   const [user] = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.id, userId));
   if (!user) return { ok: false, status: 401, error: "Unauthorized" };
-  if (!user.isPro)
-    return {
-      ok: false,
-      status: 402,
-      error: "AI breakdown requires the Pro tier.",
-    };
-  return { ok: true };
+  return { ok: true, user };
 }
 
 router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
@@ -38,9 +35,21 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
   }
 
   const userId = req.userId!;
-  const gate = await assertPro(userId);
-  if (!gate.ok) {
-    res.status(gate.status).json({ error: gate.error });
+  const result = await getUserOrFail(userId);
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  const { user } = result;
+
+  // Pro users go straight through. Credit holders get one credit consumed.
+  // Everyone else gets a 402.
+  const useCredit = !user.isPro && user.topicCredits > 0;
+  if (!user.isPro && !useCredit) {
+    res.status(402).json({
+      error: "AI breakdown requires the Pro tier or a topic credit.",
+      creditsRequired: true,
+    });
     return;
   }
 
@@ -55,6 +64,15 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
 
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
+
+    // Atomically decrement the credit now that the breakdown succeeded.
+    if (useCredit) {
+      await db
+        .update(usersTable)
+        .set({ topicCredits: sql`GREATEST(topic_credits - 1, 0)` })
+        .where(eq(usersTable.id, userId));
+    }
+
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "xAI breakdown failed");
@@ -75,9 +93,13 @@ router.post(
     }
 
     const userId = req.userId!;
-    const gate = await assertPro(userId);
-    if (!gate.ok) {
-      res.status(gate.status).json({ error: gate.error });
+    const userResult = await getUserOrFail(userId);
+    if (!userResult.ok) {
+      res.status(userResult.status).json({ error: userResult.error });
+      return;
+    }
+    if (!userResult.user.isPro) {
+      res.status(402).json({ error: "AI gap regeneration requires the Pro tier." });
       return;
     }
 

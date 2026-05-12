@@ -10,6 +10,7 @@ import {
   Key,
   Sparkles,
   Crown,
+  Zap,
 } from "lucide-react";
 import {
   Show,
@@ -54,6 +55,8 @@ export function Home() {
   );
   const [showApiModal, setShowApiModal] = useState(false);
   const [showApiEdit, setShowApiEdit] = useState(false);
+  const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
+  const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<BreakdownResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -78,6 +81,7 @@ export function Home() {
   const isPro = account?.isPro ?? false;
   const monthlyLimit = account?.monthlyImageLimit ?? 0;
   const monthlyUsed = account?.imagesGeneratedThisMonth ?? 0;
+  const topicCredits = account?.topicCredits ?? 0;
 
   const upsellReason: "signed-out" | "free-tier" | null = !userLoaded
     ? null
@@ -172,15 +176,7 @@ export function Home() {
     void refetchAccount();
   }
 
-  async function handleSubmit(customPrompt?: string) {
-    const topic = (customPrompt ?? prompt).trim();
-    if (!topic) return;
-
-    if (!isPro && !apiKey) {
-      setShowApiModal(true);
-      return;
-    }
-
+  async function runBreakdown(topic: string, useServerKey: boolean) {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -189,10 +185,12 @@ export function Home() {
     generationRef.current++;
 
     try {
-      const data = isPro
+      const data = useServerKey
         ? await generateBreakdownOnServer(topic)
         : await generateBreakdown(topic, apiKey);
       setResult(data);
+      // Refetch account so credit count updates immediately after a credit breakdown.
+      if (useServerKey && !isPro) void refetchAccount();
       if (canGenerateImages) {
         void generateAllImages(data);
       }
@@ -201,6 +199,39 @@ export function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSubmit(customPrompt?: string) {
+    const topic = (customPrompt ?? prompt).trim();
+    if (!topic) return;
+
+    // Pro users always use the server key.
+    if (isPro) {
+      await runBreakdown(topic, true);
+      return;
+    }
+
+    // Free user with a BYO key — use it directly.
+    if (apiKey) {
+      await runBreakdown(topic, false);
+      return;
+    }
+
+    // Free user, no BYO key — gate on credits.
+    if (topicCredits > 0) {
+      setPendingCreditTopic(topic);
+      return;
+    }
+
+    // No key, no credits — show the no-credits prompt.
+    setShowNoCreditsPrompt(true);
+  }
+
+  async function handleProceedWithCredit() {
+    if (!pendingCreditTopic) return;
+    const topic = pendingCreditTopic;
+    setPendingCreditTopic(null);
+    await runBreakdown(topic, true);
   }
 
   async function handleRegenerateGaps() {
@@ -341,6 +372,15 @@ export function Home() {
                   <Crown className="w-3 h-3" />
                   PRO · {monthlyUsed}/{monthlyLimit}
                 </span>
+              ) : topicCredits > 0 ? (
+                <Link
+                  href="/pricing"
+                  title="Buy more credits"
+                  className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(38_92%_50%/0.15)] border border-[hsl(38_92%_50%/0.35)] text-[10px] font-bold text-[hsl(38_92%_70%)] hover:bg-[hsl(38_92%_50%/0.25)] transition-colors"
+                >
+                  <Zap className="w-3 h-3" />
+                  {topicCredits} credit{topicCredits !== 1 ? "s" : ""}
+                </Link>
               ) : (
                 <Link
                   href="/pricing"
@@ -426,6 +466,92 @@ export function Home() {
               </button>
             </div>
           </div>
+
+          {/* Credit confirmation banner */}
+          {pendingCreditTopic && (
+            <div className="w-full rounded-2xl border border-[hsl(38_92%_50%/0.4)] bg-[hsl(38_92%_50%/0.08)] p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <Zap className="w-4 h-4 text-[hsl(38_92%_60%)] shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[hsl(38_92%_75%)]">
+                    1 credit will be used
+                  </p>
+                  <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
+                    This will run a full server-hosted breakdown of &ldquo;{pendingCreditTopic}&rdquo; including innovation gaps and AI images.
+                    You have {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleProceedWithCredit}
+                  className="flex-1 py-2 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors"
+                >
+                  Proceed (use 1 credit)
+                </button>
+                <button
+                  onClick={() => setPendingCreditTopic(null)}
+                  className="px-4 py-2 rounded-xl border border-[hsl(216_34%_17%)] text-sm text-[hsl(215.4_16.3%_66.9%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* No-credits prompt */}
+          {showNoCreditsPrompt && !pendingCreditTopic && (
+            <div className="w-full rounded-2xl border border-[hsl(280_65%_60%/0.3)] bg-gradient-to-r from-[hsl(280_65%_60%/0.06)] to-[hsl(38_92%_50%/0.04)] p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-[hsl(280_65%_80%)] shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-[hsl(213_31%_91%)]">
+                    You need a credit or API key to continue
+                  </p>
+                  <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
+                    Pick one option below to run a server-hosted breakdown.
+                  </p>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <Link
+                  href="/pricing#credits"
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-[hsl(38_92%_50%/0.35)] bg-[hsl(38_92%_50%/0.08)] hover:bg-[hsl(38_92%_50%/0.15)] transition-colors group"
+                >
+                  <Zap className="w-5 h-5 text-[hsl(38_92%_60%)] shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-[hsl(38_92%_75%)]">Buy topic credits</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $2 · no subscription</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-[hsl(280_65%_60%/0.3)] bg-[hsl(280_65%_60%/0.06)] hover:bg-[hsl(280_65%_60%/0.12)] transition-colors group"
+                >
+                  <Crown className="w-5 h-5 text-[hsl(280_65%_75%)] shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-[hsl(280_65%_85%)]">Upgrade to Pro</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">$12/mo · unlimited breakdowns</p>
+                  </div>
+                </Link>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => { setShowNoCreditsPrompt(false); setShowApiModal(true); }}
+                  className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] underline underline-offset-2 transition-colors"
+                >
+                  Use your own xAI API key instead
+                </button>
+                <span className="text-[hsl(215.4_16.3%_26.9%)]">·</span>
+                <button
+                  onClick={() => setShowNoCreditsPrompt(false)}
+                  className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

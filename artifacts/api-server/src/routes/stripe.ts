@@ -1,14 +1,23 @@
 import express, { Router, type IRouter, type Request, type Response } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type Stripe from "stripe";
 import { db, usersTable } from "@workspace/db";
-import { CreateStripeCheckoutSessionBody } from "@workspace/api-zod";
+import {
+  CreateStripeCheckoutSessionBody,
+  CreateCreditCheckoutSessionBody,
+} from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
 import { getStripeSync, getUncachableStripeClient } from "../lib/stripeClient";
 
 const PRO_PRICE_MONTHLY_CENTS = 1200;
 const PRO_PRICE_ANNUAL_CENTS = 10800; // $108/yr — 25% off $144
 const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
+
+const CREDIT_PACKS: Record<"1" | "5" | "10", { cents: number; credits: number; label: string }> = {
+  "1": { cents: 200, credits: 1, label: "1 Topic Credit" },
+  "5": { cents: 800, credits: 5, label: "5 Topic Credits" },
+  "10": { cents: 1500, credits: 10, label: "10 Topic Credits" },
+};
 
 type BillingInterval = "month" | "year";
 
@@ -145,6 +154,26 @@ async function applyEventToUsers(
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.client_reference_id ?? session.metadata?.["userId"];
+      if (!userId) {
+        log.warn({ sessionId: session.id }, "checkout.session.completed missing userId");
+        return;
+      }
+
+      // One-time payment: add topic credits to the user.
+      if (session.mode === "payment") {
+        const creditCountRaw = session.metadata?.["creditCount"];
+        const creditCount = creditCountRaw ? parseInt(creditCountRaw, 10) : 0;
+        if (creditCount > 0) {
+          await db
+            .update(usersTable)
+            .set({ topicCredits: sql`topic_credits + ${creditCount}` })
+            .where(eq(usersTable.id, userId));
+          log.info({ userId, creditCount }, "Topic credits added");
+        }
+        return;
+      }
+
+      // Subscription payment: grant Pro access.
       const customerId =
         typeof session.customer === "string"
           ? session.customer
@@ -153,10 +182,6 @@ async function applyEventToUsers(
         typeof session.subscription === "string"
           ? session.subscription
           : session.subscription?.id;
-      if (!userId) {
-        log.warn({ sessionId: session.id }, "checkout.session.completed missing userId");
-        return;
-      }
       await db
         .update(usersTable)
         .set({
@@ -264,6 +289,75 @@ router.post(
       res.json({ url: session.url });
     } catch (err) {
       req.log.error({ err }, "Failed to create Stripe checkout session");
+      res.status(502).json({ error: "Failed to create checkout session" });
+    }
+  },
+);
+
+router.post(
+  "/stripe/credits/checkout",
+  requireAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    const userId = req.userId!;
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, userId));
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parsed = CreateCreditCheckoutSessionBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid pack selection" });
+      return;
+    }
+
+    const pack = CREDIT_PACKS[parsed.data.pack as "1" | "5" | "10"];
+    if (!pack) {
+      res.status(400).json({ error: "Invalid pack selection" });
+      return;
+    }
+
+    try {
+      const stripe = await getUncachableStripeClient();
+      const origin = originFromRequest(req);
+
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        mode: "payment",
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: pack.cents,
+              product_data: {
+                name: pack.label,
+                description: `Use ${pack.credits} server-hosted AI breakdown${pack.credits > 1 ? "s" : ""} — no API key needed.`,
+              },
+            },
+          },
+        ],
+        success_url: `${origin}/pricing?credits=success`,
+        cancel_url: `${origin}/pricing?credits=cancelled`,
+        client_reference_id: userId,
+        metadata: { userId, creditCount: String(pack.credits) },
+      };
+      if (user.stripeCustomerId) {
+        sessionParams.customer = user.stripeCustomerId;
+      } else if (user.email) {
+        sessionParams.customer_email = user.email;
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      if (!session.url) {
+        res.status(502).json({ error: "Stripe did not return a checkout URL" });
+        return;
+      }
+      res.json({ url: session.url });
+    } catch (err) {
+      req.log.error({ err }, "Failed to create credit checkout session");
       res.status(502).json({ error: "Failed to create checkout session" });
     }
   },

@@ -32,6 +32,7 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
       isPro,
       imagesGeneratedThisMonth: imageCount,
       monthlyImageLimit: getMonthlyLimit(isPro),
+      topicCredits: user?.topicCredits ?? 0,
     }),
   );
 });

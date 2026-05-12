@@ -19,6 +19,7 @@ import type {
 import type {
   Account,
   BreakdownInput,
+  CreditCheckoutRequest,
   GapsInput,
   GenerateProBreakdown200,
   GeneratedImage,
@@ -608,6 +609,93 @@ export const useCreateStripeCheckoutSession = <
   TContext
 > => {
   return useMutation(getCreateStripeCheckoutSessionMutationOptions(options));
+};
+
+/**
+ * @summary Create a Stripe Checkout session for a one-time topic-credit pack
+ */
+export const getCreateCreditCheckoutSessionUrl = () => {
+  return `/api/stripe/credits/checkout`;
+};
+
+export const createCreditCheckoutSession = async (
+  creditCheckoutRequest: CreditCheckoutRequest,
+  options?: RequestInit,
+): Promise<StripeRedirect> => {
+  return customFetch<StripeRedirect>(getCreateCreditCheckoutSessionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(creditCheckoutRequest),
+  });
+};
+
+export const getCreateCreditCheckoutSessionMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCreditCheckoutSession>>,
+    TError,
+    { data: BodyType<CreditCheckoutRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCreditCheckoutSession>>,
+  TError,
+  { data: BodyType<CreditCheckoutRequest> },
+  TContext
+> => {
+  const mutationKey = ["createCreditCheckoutSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCreditCheckoutSession>>,
+    { data: BodyType<CreditCheckoutRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCreditCheckoutSession(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCreditCheckoutSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCreditCheckoutSession>>
+>;
+export type CreateCreditCheckoutSessionMutationBody =
+  BodyType<CreditCheckoutRequest>;
+export type CreateCreditCheckoutSessionMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a Stripe Checkout session for a one-time topic-credit pack
+ */
+export const useCreateCreditCheckoutSession = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCreditCheckoutSession>>,
+    TError,
+    { data: BodyType<CreditCheckoutRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCreditCheckoutSession>>,
+  TError,
+  { data: BodyType<CreditCheckoutRequest> },
+  TContext
+> => {
+  return useMutation(getCreateCreditCheckoutSessionMutationOptions(options));
 };
 
 /**

@@ -16,6 +16,7 @@ export interface Account {
   isPro: boolean;
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
+  topicCredits: number;
 }
 
 export interface ImageInput {
@@ -73,6 +74,19 @@ export const StripeCheckoutRequestInterval = {
 
 export interface StripeCheckoutRequest {
   interval?: StripeCheckoutRequestInterval;
+}
+
+export type CreditCheckoutRequestPack =
+  (typeof CreditCheckoutRequestPack)[keyof typeof CreditCheckoutRequestPack];
+
+export const CreditCheckoutRequestPack = {
+  NUMBER_1: "1",
+  NUMBER_5: "5",
+  NUMBER_10: "10",
+} as const;
+
+export interface CreditCheckoutRequest {
+  pack: CreditCheckoutRequestPack;
 }
 
 export type GenerateProBreakdown200 = { [key: string]: unknown };

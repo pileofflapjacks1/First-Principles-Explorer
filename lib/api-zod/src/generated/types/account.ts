@@ -13,4 +13,5 @@ export interface Account {
   isPro: boolean;
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
+  topicCredits: number;
 }

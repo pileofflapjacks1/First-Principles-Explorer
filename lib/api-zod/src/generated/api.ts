@@ -24,6 +24,7 @@ export const GetMeResponse = zod.object({
   isPro: zod.boolean(),
   imagesGeneratedThisMonth: zod.number(),
   monthlyImageLimit: zod.number(),
+  topicCredits: zod.number(),
 });
 
 /**
@@ -96,6 +97,17 @@ export const CreateStripeCheckoutSessionBody = zod.object({
 });
 
 export const CreateStripeCheckoutSessionResponse = zod.object({
+  url: zod.string(),
+});
+
+/**
+ * @summary Create a Stripe Checkout session for a one-time topic-credit pack
+ */
+export const CreateCreditCheckoutSessionBody = zod.object({
+  pack: zod.enum(["1", "5", "10"]),
+});
+
+export const CreateCreditCheckoutSessionResponse = zod.object({
   url: zod.string(),
 });
 

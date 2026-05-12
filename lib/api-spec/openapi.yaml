@@ -175,6 +175,30 @@ paths:
           description: Unauthorized
         "502":
           description: Stripe error
+  /stripe/credits/checkout:
+    post:
+      operationId: createCreditCheckoutSession
+      tags: [stripe]
+      summary: Create a Stripe Checkout session for a one-time topic-credit pack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditCheckoutRequest"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StripeRedirect"
+        "400":
+          description: Invalid pack
+        "401":
+          description: Unauthorized
+        "502":
+          description: Stripe error
   /stripe/portal:
     post:
       operationId: createStripePortalSession
@@ -209,6 +233,7 @@ components:
         - isPro
         - imagesGeneratedThisMonth
         - monthlyImageLimit
+        - topicCredits
       properties:
         userId:
           type: string
@@ -219,6 +244,8 @@ components:
         imagesGeneratedThisMonth:
           type: integer
         monthlyImageLimit:
+          type: integer
+        topicCredits:
           type: integer
     ImageInput:
       type: object
@@ -305,3 +332,10 @@ components:
           type: string
           enum: [month, year]
           default: month
+    CreditCheckoutRequest:
+      type: object
+      required: [pack]
+      properties:
+        pack:
+          type: string
+          enum: ["1", "5", "10"]
