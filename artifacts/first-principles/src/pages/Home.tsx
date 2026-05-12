@@ -616,9 +616,20 @@ export function Home() {
             <div className="flex-1">
               <p className="text-xs text-[hsl(215.4_16.3%_46.9%)] uppercase tracking-wide mb-1">First Principles Breakdown</p>
               <h2 className="text-2xl font-bold text-white">{result.topic}</h2>
-              <p className="text-sm text-[hsl(215.4_16.3%_56.9%)] mt-1">
-                {result.breakdown.length} levels from fundamentals to application
-              </p>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <p className="text-sm text-[hsl(215.4_16.3%_56.9%)]">
+                  {result.breakdown.length} levels from fundamentals to application
+                </p>
+                {usedCreditBreakdown && (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(38_92%_50%/0.12)] border border-[hsl(38_92%_50%/0.35)] text-[hsl(38_92%_65%)] text-xs font-medium hover:bg-[hsl(38_92%_50%/0.22)] hover:text-[hsl(38_92%_80%)] transition-colors"
+                  >
+                    <Zap className="w-3 h-3" />
+                    {topicCredits} credit{topicCredits !== 1 ? "s" : ""} left
+                  </Link>
+                )}
+              </div>
             </div>
             <div className="shrink-0 flex items-center gap-2">
               <div className="flex items-center gap-2 bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-xl px-3 py-2">
