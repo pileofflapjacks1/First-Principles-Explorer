@@ -1,13 +1,13 @@
 /**
  * xai-text.ts – First-principles xAI interaction layer
- *
+ * 
  * Strongly typed, robust wrappers for Grok-3 using your detailed prompting.
  * Everything starts from fundamentals: correctness first, then clarity, then extensibility.
  */
 
 export interface WikiLink {
   title: string;
-  url: string;
+  url: string; // Grokipedia search URL[](https://grokipedia.com/page/grokipedia-search?q=...)
 }
 
 export interface BreakdownLevel {
@@ -120,11 +120,11 @@ function parseJsonLoose<T>(content: string, kind: "object" | "array"): T {
   }
 }
 
-/** Clean chat completion helper */
+/** Clean chat completion helper (no more repeating the full body) */
 async function chatCompletion(
   apiKey: string,
   messages: { role: "system" | "user"; content: string }[],
-  options: XaiOptions = {},
+  options: XaiOptions = {}
 ): Promise<string> {
   const body = {
     model: options.model ?? "grok-3",
@@ -157,11 +157,11 @@ async function chatCompletion(
   return content;
 }
 
-/** Generate complete first-principles breakdown */
+/** Generate complete first-principles breakdown (now fully typed) */
 export async function generateBreakdownWithXai(
   topic: string,
   apiKey: string,
-  options: XaiOptions = {},
+  options: XaiOptions = {}
 ): Promise<BreakdownResponse> {
   const content = await chatCompletion(
     apiKey,
@@ -169,13 +169,13 @@ export async function generateBreakdownWithXai(
       { role: "system", content: SYSTEM_PROMPT + "\n\n" + SCHEMA_HINT },
       { role: "user", content: `Break down from first principles: "${topic}"` },
     ],
-    { temperature: 0.7, max_tokens: 5000, ...options },
+    { temperature: 0.7, max_tokens: 5000, ...options }
   );
 
   return parseJsonLoose<BreakdownResponse>(content, "object");
 }
 
-/** Analyze a specific company's position relative to an innovation gap */
+/** Analyze a specific company’s position relative to an innovation gap */
 export async function analyzeStockWithXai(
   params: {
     name: string;
@@ -188,7 +188,7 @@ export async function analyzeStockWithXai(
     gapInnovationPotential: string;
   },
   apiKey: string,
-  options: XaiOptions = {},
+  options: XaiOptions = {}
 ): Promise<string> {
   const userPrompt = [
     `Company: ${params.name} (${params.exchange}: ${params.ticker})`,
@@ -207,18 +207,18 @@ export async function analyzeStockWithXai(
       { role: "system", content: STOCK_SYSTEM_PROMPT },
       { role: "user", content: userPrompt },
     ],
-    { temperature: 0.5, max_tokens: 1500, ...options },
+    { temperature: 0.5, max_tokens: 1500, ...options }
   );
 
   return stripFences(content);
 }
 
-/** Regenerate innovation gaps */
+/** Regenerate innovation gaps (cleaner user prompt — model already knows the format) */
 export async function regenerateGapsWithXai(
   topic: string,
   breakdownTitles: string[],
   apiKey: string,
-  options: XaiOptions = {},
+  options: XaiOptions = {}
 ): Promise<Gap[]> {
   const content = await chatCompletion(
     apiKey,
@@ -226,10 +226,10 @@ export async function regenerateGapsWithXai(
       { role: "system", content: GAPS_SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdownTitles.join(", ")}\n\nReturn ONLY a JSON array:\n[\n  {\n    "gap_title": "string",\n    "why_exists": "string",\n    "innovation_potential": "string",\n    "search_query": "string (Google-style query for companies working on this)",\n    "image_prompt": "string (futuristic concept-art image-gen prompt visualizing this gap, ~30 words)",\n    "public_companies": [\n      {\n        "name": "string (full company name)",\n        "ticker": "string (stock ticker)",\n        "exchange": "string (NASDAQ, NYSE, etc.)",\n        "relevance": "string (1 sentence on how they are involved in this gap)"\n      }\n    ]\n  }\n]`,
+        content: `Topic: "${topic}"\n\nBreakdown levels: ${breakdownTitles.join(", ")}\n\nReturn ONLY a valid JSON array of gaps.`,
       },
     ],
-    { temperature: 0.9, max_tokens: 2500, ...options },
+    { temperature: 0.9, max_tokens: 2500, ...options }
   );
 
   return parseJsonLoose<Gap[]>(content, "array");
