@@ -32,10 +32,11 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  if (!user.isPro) {
+  // Pro users and free users who have purchased topic credits may use image generation.
+  if (!user.isPro && user.topicCredits <= 0) {
     res
       .status(402)
-      .json({ error: "Image generation requires the Pro tier." });
+      .json({ error: "Image generation requires the Pro tier or a topic credit." });
     return;
   }
 

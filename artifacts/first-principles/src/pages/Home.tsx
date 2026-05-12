@@ -57,6 +57,7 @@ export function Home() {
   const [showApiEdit, setShowApiEdit] = useState(false);
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
+  const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<BreakdownResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -90,7 +91,8 @@ export function Home() {
       : !isPro
         ? "free-tier"
         : null;
-  const canGenerateImages = upsellReason === null;
+  // Pro users always get images. Free users who ran a credit breakdown this session also get them.
+  const canGenerateImages = isPro || usedCreditBreakdown;
 
   function handleApiKeySave(key: string) {
     setApiKey(key);
@@ -182,16 +184,25 @@ export function Home() {
     setResult(null);
     setActiveCardId(null);
     setImages({});
+    // Reset credit session flag at the start of each new breakdown.
+    setUsedCreditBreakdown(false);
     generationRef.current++;
+
+    const usingCredit = useServerKey && !isPro;
 
     try {
       const data = useServerKey
         ? await generateBreakdownOnServer(topic)
         : await generateBreakdown(topic, apiKey);
       setResult(data);
-      // Refetch account so credit count updates immediately after a credit breakdown.
-      if (useServerKey && !isPro) void refetchAccount();
-      if (canGenerateImages) {
+      if (usingCredit) {
+        // Mark session as credit-enabled so images are unlocked for this breakdown.
+        setUsedCreditBreakdown(true);
+        void refetchAccount();
+      }
+      // canGenerateImages may have just become true via setUsedCreditBreakdown,
+      // so check isPro || usingCredit directly here.
+      if (isPro || usingCredit) {
         void generateAllImages(data);
       }
     } catch (err) {
