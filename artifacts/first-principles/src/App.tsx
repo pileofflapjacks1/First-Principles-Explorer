@@ -103,18 +103,6 @@ function SignUpPage() {
   );
 }
 
-function ProtectedPricing() {
-  return (
-    <>
-      <Show when="signed-in">
-        <Pricing />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
-    </>
-  );
-}
 
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
@@ -135,7 +123,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/" component={HomeOrPortal} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
-            <Route path="/pricing" component={ProtectedPricing} />
+            <Route path="/pricing" component={Pricing} />
             <Route component={NotFound} />
           </Switch>
         </TooltipProvider>
