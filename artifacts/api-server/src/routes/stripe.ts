@@ -1,7 +1,7 @@
 import express, { Router, type IRouter, type Request, type Response } from "express";
 import { eq, sql } from "drizzle-orm";
 import type Stripe from "stripe";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, stripeProcessedSessionsTable } from "@workspace/db";
 import {
   CreateStripeCheckoutSessionBody,
   CreateCreditCheckoutSessionBody,
@@ -164,6 +164,17 @@ async function applyEventToUsers(
         const creditCountRaw = session.metadata?.["creditCount"];
         const creditCount = creditCountRaw ? parseInt(creditCountRaw, 10) : 0;
         if (creditCount > 0) {
+          // Guard against duplicate/replayed Stripe events by recording the
+          // session ID. ON CONFLICT (primary key) → row already exists → skip.
+          const inserted = await db
+            .insert(stripeProcessedSessionsTable)
+            .values({ stripeSessionId: session.id, userId, creditsAdded: creditCount })
+            .onConflictDoNothing()
+            .returning({ stripeSessionId: stripeProcessedSessionsTable.stripeSessionId });
+          if (inserted.length === 0) {
+            log.info({ sessionId: session.id }, "Duplicate payment event skipped");
+            return;
+          }
           await db
             .update(usersTable)
             .set({ topicCredits: sql`topic_credits + ${creditCount}` })

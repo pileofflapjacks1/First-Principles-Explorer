@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
-import { and, eq, sql } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
-import { issueCreditSessionToken } from "../lib/creditSession";
+import { and, eq, sql, gt } from "drizzle-orm";
+import { randomUUID } from "crypto";
+import { db, usersTable, creditBreakdownSessionsTable } from "@workspace/db";
 import {
   GenerateProBreakdownBody,
   RegenerateProGapsBody,
@@ -82,10 +82,20 @@ router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
 
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
-    // Issue a short-lived HMAC session token so the frontend can call /images
-    // for this breakdown without a Pro subscription. The token is valid for 2 hours.
+    // Create a DB-backed credit session so the frontend can call /images for
+    // this specific breakdown. Image slots = number of image prompts in the result.
     if (useCredit) {
-      res.setHeader("X-Credit-Session", issueCreditSessionToken(userId));
+      const imagesRemaining =
+        data.breakdown.filter((b) => !!b.image_prompt).length +
+        (data.gaps ?? []).filter((g) => !!g.image_prompt).length;
+      const sessionId = randomUUID();
+      await db.insert(creditBreakdownSessionsTable).values({
+        id: sessionId,
+        userId,
+        imagesRemaining,
+        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+      });
+      res.setHeader("X-Credit-Session", sessionId);
     }
     res.json(data);
   } catch (err) {

@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, sql } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
-import { validateCreditSessionToken } from "../lib/creditSession";
+import { and, eq, gt, sql } from "drizzle-orm";
+import { db, usersTable, creditBreakdownSessionsTable } from "@workspace/db";
 import {
   GenerateProImageBody,
   GenerateProImageResponse,
@@ -34,13 +33,30 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
   }
 
   // Pro users may always generate images.
-  // Free users need a valid credit session token issued by POST /breakdown.
+  // Free users need a valid credit session issued by POST /breakdown.
+  // Each session has a bounded image count (one slot per image prompt in the breakdown).
   if (!user.isPro) {
-    const token = req.headers["x-credit-session"] as string | undefined;
-    if (!validateCreditSessionToken(token, user.id)) {
-      res
-        .status(402)
-        .json({ error: "Image generation requires the Pro tier or a valid credit session." });
+    const sessionId = req.headers["x-credit-session"] as string | undefined;
+    if (!sessionId) {
+      res.status(402).json({ error: "Image generation requires the Pro tier or a valid credit session." });
+      return;
+    }
+    // Atomically consume one image slot. If no row is updated, the session is
+    // invalid, expired, or exhausted.
+    const [consumed] = await db
+      .update(creditBreakdownSessionsTable)
+      .set({ imagesRemaining: sql`images_remaining - 1` })
+      .where(
+        and(
+          eq(creditBreakdownSessionsTable.id, sessionId),
+          eq(creditBreakdownSessionsTable.userId, user.id),
+          gt(creditBreakdownSessionsTable.imagesRemaining, 0),
+          gt(creditBreakdownSessionsTable.expiresAt, new Date()),
+        ),
+      )
+      .returning({ id: creditBreakdownSessionsTable.id });
+    if (!consumed) {
+      res.status(402).json({ error: "Image generation requires the Pro tier or a valid credit session." });
       return;
     }
   }
