@@ -6,7 +6,7 @@ import {
   GenerateProBreakdownBody,
   RegenerateProGapsBody,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/auth";
+import { optionalAuth, requireAuth } from "../middlewares/auth";
 import {
   generateBreakdownWithXai,
   regenerateGapsWithXai,
@@ -28,14 +28,21 @@ async function getUserOrFail(
   return { ok: true, user };
 }
 
-router.post("/breakdown", requireAuth, async (req, res): Promise<void> => {
+router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   const parsed = GenerateProBreakdownBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const userId = req.userId!;
+  // Unauthenticated callers get 402 + creditsRequired (not 401) so the
+  // frontend can direct them to buy credits or sign in.
+  if (!req.userId) {
+    res.status(402).json({ error: "No credits remaining.", creditsRequired: true });
+    return;
+  }
+
+  const userId = req.userId;
   const result = await getUserOrFail(userId);
   if (!result.ok) {
     res.status(result.status).json({ error: result.error });

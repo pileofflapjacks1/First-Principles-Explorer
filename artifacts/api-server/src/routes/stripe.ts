@@ -164,22 +164,26 @@ async function applyEventToUsers(
         const creditCountRaw = session.metadata?.["creditCount"];
         const creditCount = creditCountRaw ? parseInt(creditCountRaw, 10) : 0;
         if (creditCount > 0) {
-          // Guard against duplicate/replayed Stripe events by recording the
-          // session ID. ON CONFLICT (primary key) → row already exists → skip.
-          const inserted = await db
-            .insert(stripeProcessedSessionsTable)
-            .values({ stripeSessionId: session.id, userId, creditsAdded: creditCount })
-            .onConflictDoNothing()
-            .returning({ stripeSessionId: stripeProcessedSessionsTable.stripeSessionId });
-          if (inserted.length === 0) {
-            log.info({ sessionId: session.id }, "Duplicate payment event skipped");
-            return;
-          }
-          await db
-            .update(usersTable)
-            .set({ topicCredits: sql`topic_credits + ${creditCount}` })
-            .where(eq(usersTable.id, userId));
-          log.info({ userId, creditCount }, "Topic credits added");
+          // Wrap dedup insert + credit increment in a transaction so that
+          // a crash between the two operations never silently loses credits.
+          // If the insert conflicts (duplicate event), the transaction is a
+          // no-op and Stripe retries are safely handled.
+          await db.transaction(async (tx) => {
+            const inserted = await tx
+              .insert(stripeProcessedSessionsTable)
+              .values({ stripeSessionId: session.id, userId, creditsAdded: creditCount })
+              .onConflictDoNothing()
+              .returning({ stripeSessionId: stripeProcessedSessionsTable.stripeSessionId });
+            if (inserted.length === 0) {
+              log.info({ sessionId: session.id }, "Duplicate payment event skipped");
+              return;
+            }
+            await tx
+              .update(usersTable)
+              .set({ topicCredits: sql`topic_credits + ${creditCount}` })
+              .where(eq(usersTable.id, userId));
+            log.info({ userId, creditCount }, "Topic credits added");
+          });
         }
         return;
       }

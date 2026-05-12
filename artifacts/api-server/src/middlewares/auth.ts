@@ -11,6 +11,51 @@ declare global {
   }
 }
 
+/**
+ * Like requireAuth but never rejects the request — it only sets req.userId
+ * when the caller is authenticated. Use this when the route itself decides
+ * what status to return for unauthenticated calls (e.g. 402 instead of 401).
+ */
+export async function optionalAuth(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
+  const auth = getAuth(req);
+  const userId = auth?.userId;
+
+  if (userId) {
+    let email: string | null = null;
+    let emailFetched = false;
+    try {
+      const clerkUser = await clerkClient.users.getUser(userId);
+      email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
+      emailFetched = true;
+    } catch (err) {
+      req.log.warn({ err, userId }, "Failed to fetch Clerk user for email sync");
+    }
+
+    if (emailFetched && email !== null) {
+      await db
+        .insert(usersTable)
+        .values({ id: userId, email })
+        .onConflictDoUpdate({
+          target: usersTable.id,
+          set: { email },
+        });
+    } else {
+      await db
+        .insert(usersTable)
+        .values({ id: userId, email })
+        .onConflictDoNothing({ target: usersTable.id });
+    }
+
+    req.userId = userId;
+  }
+
+  next();
+}
+
 export async function requireAuth(
   req: Request,
   res: Response,
