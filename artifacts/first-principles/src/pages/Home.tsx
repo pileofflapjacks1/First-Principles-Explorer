@@ -58,6 +58,7 @@ export function Home() {
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
+  const [creditReceiptDismissed, setCreditReceiptDismissed] = useState(false);
   // Stores the HMAC session token issued by /breakdown for credit users.
   // A ref (not state) so all closures in generateOne/generateAllImages always see the latest value.
   const creditSessionRef = useRef<string | null>(null);
@@ -192,6 +193,7 @@ export function Home() {
     // Reset credit session at the start of each new breakdown.
     creditSessionRef.current = null;
     setUsedCreditBreakdown(false);
+    setCreditReceiptDismissed(false);
     generationRef.current++;
 
     const usingCredit = useServerKey && !isPro;
@@ -638,6 +640,28 @@ export function Home() {
               </div>
             </div>
           </div>
+
+          {/* Credit usage receipt */}
+          {usedCreditBreakdown && !creditReceiptDismissed && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[hsl(38_92%_50%/0.35)] bg-[hsl(38_92%_50%/0.07)]">
+              <Zap className="w-4 h-4 text-[hsl(38_92%_60%)] shrink-0" />
+              <p className="flex-1 text-sm text-[hsl(38_92%_75%)]">
+                <span className="font-semibold">1 credit used</span>
+                {" — "}
+                {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.{" "}
+                <Link href="/pricing" className="underline underline-offset-2 hover:text-[hsl(38_92%_90%)] transition-colors">
+                  Buy more
+                </Link>
+              </p>
+              <button
+                onClick={() => setCreditReceiptDismissed(true)}
+                aria-label="Dismiss"
+                className="shrink-0 text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Visuals notice */}
           {canGenerateImages && Object.keys(images).length > 0 && (
