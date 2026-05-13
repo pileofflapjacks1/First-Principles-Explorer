@@ -14,9 +14,9 @@ const SCHEMA_HINT = `Return ONLY this JSON structure with no markdown, no code b
       "wiki_links": [
         {
           "title": "string (short descriptive label for the concept)",
-          "url": "string (Grokipedia search URL in the format: https://grokipedia.com/page/grokipedia-search?q=SEARCH+TERMS where SEARCH+TERMS is the concept URL-encoded)"
+          "url": "string (Grokipedia direct topic URL in the format: https://grokipedia.com/page/concept-slug where concept-slug is the concept title in lowercase with spaces replaced by hyphens, e.g. 'Quantum Tunneling' → https://grokipedia.com/page/quantum-tunneling)"
         }
-      ] (2-3 Grokipedia search links for concepts most relevant to this level — encode spaces as + in the query string),
+      ] (2-3 Grokipedia direct-page links for concepts most relevant to this level — use lowercase hyphenated slugs, no special characters),
       "image_prompt": "string (a detailed image-generation prompt that visually explains THIS specific level. Aim for photorealistic scientific illustrations, cutaway diagrams, or educational infographics. Include style hints like 'photorealistic', 'cutaway diagram', 'high contrast dark background', 'glowing labels'. 1-2 sentences, ~30 words. Example: 'photorealistic cutaway diagram of a P-N junction showing depletion region as a translucent zone, charge carriers as glowing spheres, electric field arrows, dark background, educational style, high contrast')"
     }
   ],

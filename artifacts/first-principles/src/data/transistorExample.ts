@@ -7,9 +7,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "At the most fundamental level, transistors exploit the quantum mechanical behavior of electrons. Electrons behave as both particles and waves, occupying discrete energy levels within atoms. Their probability of tunneling through barriers or occupying energy bands determines all semiconductor behavior.",
       components: ["Wave-particle duality", "Pauli exclusion principle", "Energy quantization", "Electron spin"],
       wiki_links: [
-        { title: "Quantum Mechanics", url: "https://grokipedia.com/page/grokipedia-search?q=quantum+mechanics" },
-        { title: "Wave-Particle Duality", url: "https://grokipedia.com/page/grokipedia-search?q=wave+particle+duality" },
-        { title: "Quantum Tunneling", url: "https://grokipedia.com/page/grokipedia-search?q=quantum+tunneling" },
+        { title: "Quantum Mechanics", url: "https://grokipedia.com/page/quantum-mechanics" },
+        { title: "Wave-Particle Duality", url: "https://grokipedia.com/page/wave-particle-duality" },
+        { title: "Quantum Tunneling", url: "https://grokipedia.com/page/quantum-tunneling" },
       ],
       image_prompt: "photorealistic scientific illustration of electron wave-particle duality around a silicon atom nucleus, glowing probability cloud showing quantized energy levels, dark background with deep blue and purple highlights, educational diagram style, high contrast"
     },
@@ -19,9 +19,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "Silicon atoms have 4 valence electrons, forming a perfect covalent crystal lattice. Each atom shares electrons with 4 neighbors. This diamond cubic structure creates a rigid, predictable framework that can be precisely engineered with dopant atoms.",
       components: ["Silicon crystal lattice", "Covalent bonds", "Valence electrons", "Band gap energy (1.1 eV)"],
       wiki_links: [
-        { title: "Covalent Bonding", url: "https://grokipedia.com/page/grokipedia-search?q=covalent+bonding" },
-        { title: "Silicon Crystal Structure", url: "https://grokipedia.com/page/grokipedia-search?q=silicon+crystal+structure" },
-        { title: "Valence Electrons", url: "https://grokipedia.com/page/grokipedia-search?q=valence+electrons" },
+        { title: "Covalent Bonding", url: "https://grokipedia.com/page/covalent-bonding" },
+        { title: "Silicon Crystal Structure", url: "https://grokipedia.com/page/silicon-crystal-structure" },
+        { title: "Valence Electrons", url: "https://grokipedia.com/page/valence-electrons" },
       ],
       image_prompt: "cutaway 3D diagram of a silicon crystal lattice with diamond cubic structure, silicon atoms shown as polished spheres connected by glowing covalent bonds, deep navy background, photorealistic educational style"
     },
@@ -31,9 +31,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "In silicon, electrons occupy a valence band at low energy. Above it is a forbidden gap (1.1 eV), then the conduction band. At room temperature, thermal energy promotes a small number of electrons across this gap, enabling limited conductivity — far less than metals, far more than insulators.",
       components: ["Valence band", "Conduction band", "Band gap", "Fermi level", "Thermal excitation"],
       wiki_links: [
-        { title: "Electronic Band Structure", url: "https://grokipedia.com/page/grokipedia-search?q=electronic+band+structure" },
-        { title: "Band Gap", url: "https://grokipedia.com/page/grokipedia-search?q=band+gap+semiconductor" },
-        { title: "Fermi Level", url: "https://grokipedia.com/page/grokipedia-search?q=fermi+level" },
+        { title: "Electronic Band Structure", url: "https://grokipedia.com/page/electronic-band-structure" },
+        { title: "Band Gap", url: "https://grokipedia.com/page/band-gap" },
+        { title: "Fermi Level", url: "https://grokipedia.com/page/fermi-level" },
       ],
       image_prompt: "scientific diagram of silicon semiconductor energy band structure, valence band and conduction band as glowing horizontal layers separated by a forbidden gap, an electron jumping across the gap as a streak of light, purple and cyan tones, clean infographic style"
     },
@@ -43,9 +43,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "Adding trace amounts of phosphorus (5 valence electrons) creates N-type silicon with free electrons. Adding boron (3 valence electrons) creates P-type silicon with 'holes' — positive charge carriers. This controlled impurity changes conductivity by orders of magnitude.",
       components: ["Donor atoms (phosphorus)", "Acceptor atoms (boron)", "Free electrons", "Holes (electron vacancies)", "Carrier concentration"],
       wiki_links: [
-        { title: "Semiconductor Doping", url: "https://grokipedia.com/page/grokipedia-search?q=semiconductor+doping" },
-        { title: "N-type and P-type Silicon", url: "https://grokipedia.com/page/grokipedia-search?q=n-type+p-type+semiconductor" },
-        { title: "Electron Holes", url: "https://grokipedia.com/page/grokipedia-search?q=electron+hole+semiconductor" },
+        { title: "Semiconductor Doping", url: "https://grokipedia.com/page/semiconductor-doping" },
+        { title: "N-type and P-type Silicon", url: "https://grokipedia.com/page/n-type-and-p-type-semiconductors" },
+        { title: "Electron Holes", url: "https://grokipedia.com/page/electron-hole" },
       ],
       image_prompt: "side-by-side cross-section infographic of N-type silicon with phosphorus donor atoms in blue releasing free electrons, and P-type silicon with boron acceptor atoms in red creating holes, atomic lattice clearly visible, educational style, dark background"
     },
@@ -55,9 +55,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "When P-type and N-type silicon meet, electrons diffuse across and recombine with holes, creating a depletion region with no free carriers. An electric field builds up opposing further diffusion. This junction is the core building block of all semiconductor devices.",
       components: ["Diffusion current", "Drift current", "Depletion width", "Built-in potential (0.7V)", "Space charge region"],
       wiki_links: [
-        { title: "P–N Junction", url: "https://grokipedia.com/page/grokipedia-search?q=p-n+junction" },
-        { title: "Depletion Region", url: "https://grokipedia.com/page/grokipedia-search?q=depletion+region+semiconductor" },
-        { title: "Diode", url: "https://grokipedia.com/page/grokipedia-search?q=diode+semiconductor" },
+        { title: "P–N Junction", url: "https://grokipedia.com/page/p-n-junction" },
+        { title: "Depletion Region", url: "https://grokipedia.com/page/depletion-region" },
+        { title: "Diode", url: "https://grokipedia.com/page/diode" },
       ],
       image_prompt: "photorealistic cutaway diagram of a P-N junction in silicon showing the depletion region as a translucent zone, charge carriers as glowing red and blue spheres, electric field arrows in the gap, educational scientific illustration, high contrast dark background"
     },
@@ -67,9 +67,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "A MOSFET (Metal-Oxide-Semiconductor Field-Effect Transistor) has a Source, Drain, and Gate terminal over a thin gate oxide layer on silicon. Applying voltage to the Gate electrode creates an electric field that attracts or repels charge carriers in the channel beneath it.",
       components: ["Source terminal", "Drain terminal", "Gate electrode", "Gate oxide (SiO2)", "Channel region", "Substrate (body)"],
       wiki_links: [
-        { title: "MOSFET", url: "https://grokipedia.com/page/grokipedia-search?q=MOSFET+transistor" },
-        { title: "Gate Oxide", url: "https://grokipedia.com/page/grokipedia-search?q=gate+oxide+semiconductor" },
-        { title: "Field-Effect Transistor", url: "https://grokipedia.com/page/grokipedia-search?q=field+effect+transistor" },
+        { title: "MOSFET", url: "https://grokipedia.com/page/mosfet" },
+        { title: "Gate Oxide", url: "https://grokipedia.com/page/gate-oxide" },
+        { title: "Field-Effect Transistor", url: "https://grokipedia.com/page/field-effect-transistor" },
       ],
       image_prompt: "photorealistic 3D cutaway of a MOSFET transistor with clearly labeled source, drain, gate, gate oxide layer, and silicon substrate, channel region illuminated, high-tech blueprint aesthetic, dark background, technical illustration style"
     },
@@ -79,9 +79,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "When gate voltage exceeds the threshold voltage (typically 0.4–0.7V), an inversion layer of electrons forms in the channel between Source and Drain. Current can then flow freely. Below threshold, the channel is depleted and no current flows — the transistor is OFF.",
       components: ["Threshold voltage (Vth)", "Inversion layer", "Channel conductance", "ON/OFF states", "Subthreshold swing"],
       wiki_links: [
-        { title: "Threshold Voltage", url: "https://grokipedia.com/page/grokipedia-search?q=threshold+voltage+MOSFET" },
-        { title: "Inversion Layer", url: "https://grokipedia.com/page/grokipedia-search?q=inversion+layer+semiconductor" },
-        { title: "Subthreshold Conduction", url: "https://grokipedia.com/page/grokipedia-search?q=subthreshold+conduction+transistor" },
+        { title: "Threshold Voltage", url: "https://grokipedia.com/page/threshold-voltage" },
+        { title: "Inversion Layer", url: "https://grokipedia.com/page/inversion-layer" },
+        { title: "Subthreshold Conduction", url: "https://grokipedia.com/page/subthreshold-conduction" },
       ],
       image_prompt: "close-up scientific visualization of a MOSFET channel forming an inversion layer of glowing electrons between source and drain regions, gate voltage field lines streaming downward, dark background with bright cyan highlights, photorealistic educational style"
     },
@@ -91,9 +91,9 @@ export const TRANSISTOR_EXAMPLE = {
       description: "By modulating the gate voltage, the transistor either blocks or allows current between Source and Drain. In digital circuits, this binary ON/OFF represents 0 and 1. In analog circuits, the precise relationship between gate voltage and drain current allows amplification of weak signals.",
       components: ["Binary logic (0/1)", "Signal amplification", "Power gain", "Switching speed (GHz)", "Leakage current"],
       wiki_links: [
-        { title: "Transistor", url: "https://grokipedia.com/page/grokipedia-search?q=transistor" },
-        { title: "Digital Logic", url: "https://grokipedia.com/page/grokipedia-search?q=digital+logic+gates" },
-        { title: "Amplifier", url: "https://grokipedia.com/page/grokipedia-search?q=amplifier+transistor" },
+        { title: "Transistor", url: "https://grokipedia.com/page/transistor" },
+        { title: "Digital Logic", url: "https://grokipedia.com/page/digital-logic" },
+        { title: "Amplifier", url: "https://grokipedia.com/page/amplifier" },
       ],
       image_prompt: "macro photograph style visualization of a modern CPU die surface with billions of microscopic transistors, glowing binary signal patterns flowing through circuit traces, dramatic blue lighting, futuristic and detailed"
     }
