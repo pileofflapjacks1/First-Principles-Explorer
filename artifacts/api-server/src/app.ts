@@ -91,8 +91,18 @@ const generalLimiter = rateLimit({
   message: { error: "Too many requests. Please slow down." },
 });
 
+// Stocks AI: max 20 per IP per 10 minutes (each call hits xAI).
+const stocksLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many AI requests. Please wait a few minutes and try again." },
+});
+
 app.use("/api/breakdown", breakdownLimiter);
 app.use("/api/images", imageLimiter);
+app.use("/api/stocks", stocksLimiter);
 app.use("/api", generalLimiter);
 app.use("/api", router);
 

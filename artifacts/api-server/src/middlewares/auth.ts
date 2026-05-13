@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
+import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 
 declare global {
@@ -9,6 +10,40 @@ declare global {
       userId?: string;
     }
   }
+}
+
+/**
+ * Upsert a user row for the given Clerk userId. For returning users (row
+ * already exists) we skip the Clerk API call entirely — their email is already
+ * stored, and hitting Clerk on every request adds 100-300 ms of latency and a
+ * hard dependency on Clerk availability. We only call Clerk on the very first
+ * request (new user) to capture their email address.
+ */
+async function upsertUser(
+  userId: string,
+  log: { warn: (...a: unknown[]) => void },
+): Promise<void> {
+  // Fast path: returning user — row exists, skip Clerk fetch.
+  const [existing] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+
+  if (existing) return;
+
+  // Slow path: new user — fetch email from Clerk once, then insert.
+  let email: string | null = null;
+  try {
+    const clerkUser = await clerkClient.users.getUser(userId);
+    email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
+  } catch (err) {
+    log.warn({ err, userId }, "Failed to fetch Clerk user for email sync");
+  }
+
+  await db
+    .insert(usersTable)
+    .values({ id: userId, email })
+    .onConflictDoNothing({ target: usersTable.id });
 }
 
 /**
@@ -25,31 +60,7 @@ export async function optionalAuth(
   const userId = auth?.userId;
 
   if (userId) {
-    let email: string | null = null;
-    let emailFetched = false;
-    try {
-      const clerkUser = await clerkClient.users.getUser(userId);
-      email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
-      emailFetched = true;
-    } catch (err) {
-      req.log.warn({ err, userId }, "Failed to fetch Clerk user for email sync");
-    }
-
-    if (emailFetched && email !== null) {
-      await db
-        .insert(usersTable)
-        .values({ id: userId, email })
-        .onConflictDoUpdate({
-          target: usersTable.id,
-          set: { email },
-        });
-    } else {
-      await db
-        .insert(usersTable)
-        .values({ id: userId, email })
-        .onConflictDoNothing({ target: usersTable.id });
-    }
-
+    await upsertUser(userId, req.log);
     req.userId = userId;
   }
 
@@ -69,37 +80,7 @@ export async function requireAuth(
     return;
   }
 
-  // Look up email so admins can identify users when flipping the `is_pro` flag.
-  // Failure to fetch must not block the request — fall back to id-only upsert.
-  let email: string | null = null;
-  let emailFetched = false;
-  try {
-    const clerkUser = await clerkClient.users.getUser(userId);
-    email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
-    emailFetched = true;
-  } catch (err) {
-    req.log.warn({ err, userId }, "Failed to fetch Clerk user for email sync");
-  }
-
-  // On insert always set whatever we have (may be null). On conflict only
-  // overwrite email when we successfully fetched a non-null value, so a
-  // transient Clerk fetch failure can't wipe a previously-stored email.
-  if (emailFetched && email !== null) {
-    await db
-      .insert(usersTable)
-      .values({ id: userId, email })
-      .onConflictDoUpdate({
-        target: usersTable.id,
-        // Only refresh email — never overwrite isPro / counters here.
-        set: { email },
-      });
-  } else {
-    await db
-      .insert(usersTable)
-      .values({ id: userId, email })
-      .onConflictDoNothing({ target: usersTable.id });
-  }
-
+  await upsertUser(userId, req.log);
   req.userId = userId;
   next();
 }
