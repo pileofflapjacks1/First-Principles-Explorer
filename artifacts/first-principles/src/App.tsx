@@ -65,6 +65,15 @@ const clerkAppearance = {
       "bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-2xl w-[420px] max-w-full overflow-hidden shadow-2xl",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    userButtonPopoverActionButton:
+      "hover:bg-[hsl(216_34%_17%)] !text-[hsl(213_31%_91%)]",
+    userButtonPopoverActionButtonText: "!text-[hsl(213_31%_91%)]",
+    userButtonPopoverActionButtonIcon: "!text-[hsl(213_31%_75%)]",
+    userButtonPopoverMain: "!bg-[hsl(224_71%_7%)]",
+    userButtonPopoverCard:
+      "!bg-[hsl(224_71%_7%)] !border !border-[hsl(216_34%_17%)] !shadow-2xl",
+    userPreviewTextContainer: "!text-[hsl(213_31%_91%)]",
+    userPreviewSecondaryIdentifier: "!text-[hsl(213_31%_75%)]",
   },
 };
 
