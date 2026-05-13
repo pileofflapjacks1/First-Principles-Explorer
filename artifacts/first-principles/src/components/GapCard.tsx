@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import ReactMarkdown from "react-markdown";
-import { useAnalyzeProStock, useFindMoreCompanies } from "@workspace/api-client-react";
+import {
+  useAnalyzeProStock,
+  useFindMoreCompanies,
+} from "@workspace/api-client-react";
 import type { Gap, ImageEntry } from "../types";
 import { ImageBlock } from "./ImageBlock";
 
@@ -119,7 +122,11 @@ export function GapCard({
   }
 
   function handleStockResearch(ticker: string) {
-    window.open(`https://finance.yahoo.com/quote/${ticker}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://finance.yahoo.com/quote/${ticker}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   function handleAnalyze(company: Gap["public_companies"][number]) {
@@ -167,7 +174,9 @@ export function GapCard({
   const companies = gap.public_companies ?? [];
 
   return (
-    <div className={`rounded-xl border p-5 space-y-4 transition-all ${GAP_COLORS[index % GAP_COLORS.length]}`}>
+    <div
+      className={`rounded-xl border p-5 space-y-4 transition-all ${GAP_COLORS[index % GAP_COLORS.length]}`}
+    >
       {/* Header */}
       <div className="flex items-start gap-3">
         <div className="w-8 h-8 rounded-lg bg-[hsl(216_34%_17%)] flex items-center justify-center shrink-0 mt-0.5">
@@ -177,7 +186,9 @@ export function GapCard({
           <h3 className="font-semibold text-[hsl(213_31%_91%)] text-sm leading-tight">
             {gap.gap_title}
           </h3>
-          <p className="text-xs text-[hsl(215.4_16.3%_46.9%)] mt-0.5">Gap #{index + 1}</p>
+          <p className="text-xs text-[hsl(215.4_16.3%_46.9%)] mt-0.5">
+            Gap #{index + 1}
+          </p>
         </div>
       </div>
 
@@ -213,7 +224,7 @@ export function GapCard({
         </div>
       </div>
 
-      {/* Publicly traded companies */}
+      {/* Companies of Interest */}
       {companies.length > 0 && (
         <div className="border border-[hsl(216_34%_17%)] rounded-lg overflow-hidden">
           <button
@@ -223,14 +234,17 @@ export function GapCard({
             <div className="flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-[hsl(160_60%_60%)]" />
               <span className="text-xs font-semibold text-[hsl(213_31%_91%)]">
-                Publicly Traded Companies
+                Companies of Interest
               </span>
-              <span className="text-xs text-[hsl(215.4_16.3%_46.9%)]">({companies.length})</span>
+              <span className="text-xs text-[hsl(215.4_16.3%_46.9%)]">
+                ({companies.length})
+              </span>
             </div>
-            {showCompanies
-              ? <ChevronDown className="w-3.5 h-3.5 text-[hsl(215.4_16.3%_46.9%)]" />
-              : <ChevronRight className="w-3.5 h-3.5 text-[hsl(215.4_16.3%_46.9%)]" />
-            }
+            {showCompanies ? (
+              <ChevronDown className="w-3.5 h-3.5 text-[hsl(215.4_16.3%_46.9%)]" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5 text-[hsl(215.4_16.3%_46.9%)]" />
+            )}
           </button>
 
           {showCompanies && (
@@ -456,14 +470,19 @@ export function GapCard({
 
         {extraCompanies.error && (
           <div className="px-3 py-2 bg-[hsl(224_71%_7%)]">
-            <p className="text-[11px] text-[hsl(0_85%_70%)]">{extraCompanies.error}</p>
+            <p className="text-[11px] text-[hsl(0_85%_70%)]">
+              {extraCompanies.error}
+            </p>
           </div>
         )}
 
         {extraCompanies.companies.length > 0 && (
           <div className="divide-y divide-[hsl(216_34%_17%)]">
             {extraCompanies.companies.map((company, i) => (
-              <div key={i} className="flex items-start gap-3 px-3 py-2.5 bg-[hsl(224_71%_7%)]">
+              <div
+                key={i}
+                className="flex items-start gap-3 px-3 py-2.5 bg-[hsl(224_71%_7%)]"
+              >
                 <button
                   onClick={() => handleStockResearch(company.ticker)}
                   title="Open on Yahoo Finance"
