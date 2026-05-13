@@ -240,15 +240,17 @@ export function Home() {
       return;
     }
 
-    // Free user with a BYO key — use it directly.
-    if (apiKey) {
-      await runBreakdown(topic, false);
+    // Free user with credits — show confirmation so the credit unlocks the
+    // full experience (images + gaps). The banner offers an opt-out for
+    // users who also have a BYO key and would rather not spend a credit.
+    if (topicCredits > 0) {
+      setPendingCreditTopic(topic);
       return;
     }
 
-    // Free user, no BYO key — gate on credits.
-    if (topicCredits > 0) {
-      setPendingCreditTopic(topic);
+    // Free user with a BYO key (and no credits) — use it directly.
+    if (apiKey) {
+      await runBreakdown(topic, false);
       return;
     }
 
@@ -261,6 +263,13 @@ export function Home() {
     const topic = pendingCreditTopic;
     setPendingCreditTopic(null);
     await runBreakdown(topic, true);
+  }
+
+  async function handleUseApiKeyInstead() {
+    if (!pendingCreditTopic || !apiKey) return;
+    const topic = pendingCreditTopic;
+    setPendingCreditTopic(null);
+    await runBreakdown(topic, false);
   }
 
   async function handleRegenerateGaps() {
@@ -519,13 +528,22 @@ export function Home() {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={handleProceedWithCredit}
-                  className="flex-1 py-2 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors"
+                  className="flex-1 min-w-[180px] py-2 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors"
                 >
                   Proceed (use 1 credit)
                 </button>
+                {apiKey && (
+                  <button
+                    onClick={handleUseApiKeyInstead}
+                    className="px-4 py-2 rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] text-sm text-[hsl(213_31%_85%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
+                    title="Run a text-only breakdown using your xAI API key — no credit spent, no images or gap cards."
+                  >
+                    Use my API key instead
+                  </button>
+                )}
                 <button
                   onClick={() => setPendingCreditTopic(null)}
                   className="px-4 py-2 rounded-xl border border-[hsl(216_34%_17%)] text-sm text-[hsl(215.4_16.3%_66.9%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
