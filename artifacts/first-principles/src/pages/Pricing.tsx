@@ -292,6 +292,16 @@ export function Pricing() {
             {user?.primaryEmailAddress?.emailAddress ?? "—"}
           </span>
         </p>
+
+        <div className="flex justify-center gap-4 pt-2 text-xs text-[hsl(215.4_16.3%_36.9%)]">
+          <Link href="/terms" className="hover:text-[hsl(215.4_16.3%_56.9%)] transition-colors">
+            Terms of Service
+          </Link>
+          <span>·</span>
+          <Link href="/privacy" className="hover:text-[hsl(215.4_16.3%_56.9%)] transition-colors">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </div>
   );
