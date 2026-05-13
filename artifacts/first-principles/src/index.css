@@ -151,17 +151,18 @@
   }
 }
 
-/* Clerk UserProfile modal — override the global cardBox width constraint */
-@layer clerk {
-  .cl-userProfileModal .cl-cardBox {
-    width: min(860px, 95vw) !important;
-    max-width: none !important;
-  }
+/* Clerk card widths — unlayered so they beat @layer utilities (Tailwind) */
+/* Sign-in / sign-up: keep the narrow auth card */
+.cl-signIn .cl-cardBox,
+.cl-signUp .cl-cardBox {
+  width: 420px;
+  max-width: 95vw;
+}
 
-  .cl-userProfileModal .cl-modalContent {
-    width: min(860px, 95vw) !important;
-    max-width: none !important;
-  }
+/* Account management modal: give it room to breathe */
+.cl-userProfileModal .cl-cardBox {
+  width: min(860px, 92vw);
+  max-width: none;
 }
 
 /* Mermaid overrides for dark mode */

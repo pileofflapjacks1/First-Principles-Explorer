@@ -62,7 +62,7 @@ const clerkAppearance = {
   elements: {
     rootBox: "w-full flex justify-center",
     cardBox:
-      "bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-2xl w-[420px] max-w-full overflow-hidden shadow-2xl",
+      "bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-2xl overflow-hidden shadow-2xl",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
     userButtonPopoverActionButton:
@@ -80,7 +80,6 @@ const clerkAppearance = {
     socialButtonsBlockButtonArrow: "!text-[hsl(213_31%_91%)]",
     badge: "!hidden",
     userButtonPopoverFooter: "!hidden",
-    userProfileModal: "!w-[min(860px,95vw)]",
     userProfile: "!w-full",
   },
 };
