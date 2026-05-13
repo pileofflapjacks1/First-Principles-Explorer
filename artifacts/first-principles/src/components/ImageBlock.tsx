@@ -11,10 +11,16 @@ interface ImageBlockProps {
 }
 
 export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellReason }: ImageBlockProps) {
-  if (upsellReason) {
-    return <UpgradePrompt compact={compact} reason={upsellReason} />;
+  // Only show the upsell when no image slot exists for this card. If an
+  // imageEntry is present (loading/error/url), the user has already unlocked
+  // image generation for this breakdown (Pro or via a credit) and should see
+  // the actual image state, not the upgrade prompt.
+  if (!imageEntry) {
+    if (upsellReason) {
+      return <UpgradePrompt compact={compact} reason={upsellReason} />;
+    }
+    return null;
   }
-  if (!imageEntry) return null;
   const { url, loading, error } = imageEntry;
   const aspect = compact ? "aspect-[4/3]" : "aspect-video";
 
