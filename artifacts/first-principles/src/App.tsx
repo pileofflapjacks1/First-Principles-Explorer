@@ -74,6 +74,12 @@ const clerkAppearance = {
       "!bg-[hsl(224_71%_7%)] !border !border-[hsl(216_34%_17%)] !shadow-2xl",
     userPreviewTextContainer: "!text-[hsl(213_31%_91%)]",
     userPreviewSecondaryIdentifier: "!text-[hsl(213_31%_75%)]",
+    socialButtonsBlockButton:
+      "!border-[hsl(216_34%_30%)] hover:!bg-[hsl(216_34%_17%)]",
+    socialButtonsBlockButtonText: "!text-[hsl(213_31%_91%)] !font-medium",
+    socialButtonsBlockButtonArrow: "!text-[hsl(213_31%_91%)]",
+    badge: "!hidden",
+    userButtonPopoverFooter: "!hidden",
   },
 };
 
