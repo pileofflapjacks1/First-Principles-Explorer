@@ -10,7 +10,7 @@ export async function generateImageWithXai(
     },
     body: JSON.stringify({
       model: "grok-imagine-image-quality",
-      prompt,
+      prompt: `Ultra-photorealistic, hyperrealistic, physically accurate, sharp focus, high resolution, real-world materials and lighting. ${prompt}`,
       n: 1,
       response_format: "url",
     }),
