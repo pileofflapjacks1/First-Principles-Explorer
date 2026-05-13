@@ -227,12 +227,18 @@ async function applyEventToUsers(
         log.warn({ customerId }, "No user mapped to Stripe customer");
         return;
       }
+      const rawPeriodEnd = sub.items?.data?.[0]?.current_period_end;
+      const periodEnd =
+        event.type !== "customer.subscription.deleted" && rawPeriodEnd
+          ? new Date(rawPeriodEnd * 1000)
+          : null;
       await db
         .update(usersTable)
         .set({
           stripeSubscriptionId: sub.id,
           subscriptionStatus: status,
           isPro,
+          ...(periodEnd !== null ? { subscriptionCurrentPeriodEnd: periodEnd } : {}),
         })
         .where(eq(usersTable.id, user.id));
       return;

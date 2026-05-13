@@ -15,4 +15,8 @@ export interface Account {
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
   topicCredits: number;
+  /** @nullable */
+  subscriptionStatus?: string | null;
+  /** @nullable */
+  subscriptionCurrentPeriodEnd?: Date | null;
 }

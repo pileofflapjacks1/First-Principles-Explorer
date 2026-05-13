@@ -13,6 +13,7 @@ export const usersTable = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),
+  subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

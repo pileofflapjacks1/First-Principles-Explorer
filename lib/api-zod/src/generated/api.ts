@@ -26,6 +26,8 @@ export const GetMeResponse = zod.object({
   imagesGeneratedThisMonth: zod.number(),
   monthlyImageLimit: zod.number(),
   topicCredits: zod.number(),
+  subscriptionStatus: zod.string().nullish(),
+  subscriptionCurrentPeriodEnd: zod.coerce.date().nullish(),
 });
 
 /**

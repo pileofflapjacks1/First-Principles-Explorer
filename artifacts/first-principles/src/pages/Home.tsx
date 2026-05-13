@@ -11,6 +11,7 @@ import {
   Sparkles,
   Crown,
   Zap,
+  CreditCard,
 } from "lucide-react";
 import {
   Show,
@@ -34,6 +35,7 @@ import { BreakdownCard } from "../components/BreakdownCard";
 import { MermaidChart } from "../components/MermaidChart";
 import { GapCard } from "../components/GapCard";
 import { UpgradePrompt } from "../components/UpgradePrompt";
+import { SubscriptionTab } from "../components/SubscriptionTab";
 
 const EXAMPLE_PROMPTS = [
   "How does a transistor work",
@@ -413,7 +415,15 @@ export function Home() {
                   Upgrade
                 </Link>
               )}
-              <UserButton />
+              <UserButton>
+                <UserButton.UserProfilePage
+                  label="Subscription"
+                  url="subscription"
+                  labelIcon={<CreditCard style={{ width: 16, height: 16 }} />}
+                >
+                  <SubscriptionTab />
+                </UserButton.UserProfilePage>
+              </UserButton>
             </Show>
             <Show when="signed-out">
               <button

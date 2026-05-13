@@ -274,6 +274,11 @@ components:
           type: integer
         topicCredits:
           type: integer
+        subscriptionStatus:
+          type: ["string", "null"]
+        subscriptionCurrentPeriodEnd:
+          type: ["string", "null"]
+          format: date-time
     ImageInput:
       type: object
       required: [prompt]
