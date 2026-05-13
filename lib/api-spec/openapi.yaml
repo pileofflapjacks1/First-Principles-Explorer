@@ -255,6 +255,7 @@ components:
       required:
         - userId
         - isPro
+        - isAdmin
         - imagesGeneratedThisMonth
         - monthlyImageLimit
         - topicCredits
@@ -264,6 +265,8 @@ components:
         email:
           type: ["string", "null"]
         isPro:
+          type: boolean
+        isAdmin:
           type: boolean
         imagesGeneratedThisMonth:
           type: integer

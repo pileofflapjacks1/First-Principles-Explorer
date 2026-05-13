@@ -50,10 +50,10 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   }
   const { user } = result;
 
-  // Pro users go straight through.
+  // Admins and Pro users go straight through with no credit checks.
   // Free users: try to atomically reserve one credit before the expensive call.
   let useCredit = false;
-  if (!user.isPro) {
+  if (!user.isPro && !user.isAdmin) {
     // Attempt atomic decrement. If no row is affected, the user has no credits.
     const updated = await db
       .update(usersTable)
@@ -137,7 +137,7 @@ router.post(
       res.status(userResult.status).json({ error: userResult.error });
       return;
     }
-    if (!userResult.user.isPro) {
+    if (!userResult.user.isPro && !userResult.user.isAdmin) {
       res.status(402).json({ error: "AI gap regeneration requires the Pro tier." });
       return;
     }

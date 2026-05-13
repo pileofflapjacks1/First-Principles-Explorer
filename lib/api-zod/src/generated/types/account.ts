@@ -11,6 +11,7 @@ export interface Account {
   /** @nullable */
   email?: string | null;
   isPro: boolean;
+  isAdmin: boolean;
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
   topicCredits: number;

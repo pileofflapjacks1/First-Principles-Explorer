@@ -22,6 +22,7 @@ export const GetMeResponse = zod.object({
   userId: zod.string(),
   email: zod.string().nullish(),
   isPro: zod.boolean(),
+  isAdmin: zod.boolean(),
   imagesGeneratedThisMonth: zod.number(),
   monthlyImageLimit: zod.number(),
   topicCredits: zod.number(),

@@ -32,6 +32,24 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
+  // Admins bypass all quota checks entirely.
+  if (user.isAdmin) {
+    const xaiKey = process.env["XAI_API_KEY"];
+    if (!xaiKey) {
+      req.log.error("XAI_API_KEY is not configured on the server");
+      res.status(500).json({ error: "Image generation is not configured on the server." });
+      return;
+    }
+    try {
+      const url = await generateImageWithXai(parsed.data.prompt, xaiKey);
+      res.json(GenerateProImageResponse.parse({ url, imagesGeneratedThisMonth: 0 }));
+    } catch (err) {
+      req.log.error({ err }, "xAI image generation failed");
+      res.status(502).json({ error: "Image generation failed. Please try again." });
+    }
+    return;
+  }
+
   // Credit session users (free tier with a valid breakdown session) bypass the
   // monthly Pro quota entirely — their image slots are bounded by the session
   // itself (one slot per image_prompt in the breakdown). They do not consume

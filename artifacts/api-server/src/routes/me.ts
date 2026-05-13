@@ -25,11 +25,13 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
   }
 
   const isPro = user?.isPro ?? false;
+  const isAdmin = user?.isAdmin ?? false;
   res.json(
     GetMeResponse.parse({
       userId,
       email: user?.email ?? null,
       isPro,
+      isAdmin,
       imagesGeneratedThisMonth: imageCount,
       monthlyImageLimit: getMonthlyLimit(isPro),
       topicCredits: user?.topicCredits ?? 0,
