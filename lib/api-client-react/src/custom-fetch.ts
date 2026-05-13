@@ -44,6 +44,16 @@ export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
 }
 
+/**
+ * Invoke the registered auth token getter (if any) and return the token.
+ * Returns null when no getter is registered or the getter returns null.
+ * Useful for manual fetch calls that need the same auth header as customFetch.
+ */
+export async function getAuthToken(): Promise<string | null> {
+  if (!_authTokenGetter) return null;
+  return _authTokenGetter();
+}
+
 function isRequest(input: RequestInfo | URL): input is Request {
   return typeof Request !== "undefined" && input instanceof Request;
 }

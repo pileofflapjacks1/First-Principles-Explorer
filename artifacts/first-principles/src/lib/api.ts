@@ -1,4 +1,4 @@
-import { customFetch } from "@workspace/api-client-react";
+import { customFetch, getAuthToken } from "@workspace/api-client-react";
 import type { GeneratedImage } from "@workspace/api-client-react";
 import type { BreakdownResult } from "../types";
 
@@ -21,11 +21,14 @@ export async function generateImageOnServer(
 export async function generateBreakdownOnServer(
   topic: string,
 ): Promise<{ data: BreakdownResult; creditSessionToken: string | null }> {
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  const token = await getAuthToken();
+  if (token) headers["authorization"] = `Bearer ${token}`;
   const response = await fetch("/api/breakdown", {
     method: "POST",
     body: JSON.stringify({ topic }),
     credentials: "include",
-    headers: { "content-type": "application/json" },
+    headers,
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
