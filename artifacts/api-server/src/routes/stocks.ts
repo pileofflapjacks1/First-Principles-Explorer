@@ -26,7 +26,7 @@ router.post(
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (!user.isPro) {
+    if (!user.isPro && !user.isAdmin) {
       res.status(402).json({ error: "Finding companies requires the Pro tier." });
       return;
     }
@@ -67,7 +67,7 @@ router.post(
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (!user.isPro) {
+    if (!user.isPro && !user.isAdmin) {
       res.status(402).json({ error: "Stock analysis requires the Pro tier." });
       return;
     }

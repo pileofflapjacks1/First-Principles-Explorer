@@ -83,7 +83,7 @@ export function Home() {
     enabled: isSignedIn === true,
     retry: false,
   });
-  const isPro = account?.isPro ?? false;
+  const isPro = (account?.isPro || account?.isAdmin) ?? false;
   const monthlyLimit = account?.monthlyImageLimit ?? 0;
   const monthlyUsed = account?.imagesGeneratedThisMonth ?? 0;
   const topicCredits = account?.topicCredits ?? 0;

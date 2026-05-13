@@ -289,12 +289,14 @@ export function Pricing() {
           </div>
         )}
 
-        <p className="text-center text-xs text-[hsl(215.4_16.3%_46.9%)]">
-          Signed in as{" "}
-          <span className="text-[hsl(213_31%_71%)] font-mono">
-            {user?.primaryEmailAddress?.emailAddress ?? "—"}
-          </span>
-        </p>
+        {isSignedIn && (
+          <p className="text-center text-xs text-[hsl(215.4_16.3%_46.9%)]">
+            Signed in as{" "}
+            <span className="text-[hsl(213_31%_71%)] font-mono">
+              {user?.primaryEmailAddress?.emailAddress}
+            </span>
+          </p>
+        )}
 
         <div className="flex justify-center gap-4 pt-2 text-xs text-[hsl(215.4_16.3%_36.9%)]">
           <Link href="/terms" className="hover:text-[hsl(215.4_16.3%_56.9%)] transition-colors">
