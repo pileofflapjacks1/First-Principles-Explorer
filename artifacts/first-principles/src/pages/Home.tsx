@@ -132,8 +132,8 @@ export function Home() {
     }
   }
 
-  async function generateAllImages(data: BreakdownResult) {
-    if (!canGenerateImages) return;
+  async function generateAllImages(data: BreakdownResult, overrideCanGenerate = false) {
+    if (!canGenerateImages && !overrideCanGenerate) return;
     const genId = ++generationRef.current;
     // Capture token at the time generation starts so the closure is stable.
     const sessionToken = creditSessionRef.current;
@@ -205,19 +205,23 @@ export function Home() {
       if (useServerKey) {
         const result = await generateBreakdownOnServer(topic);
         data = result.data;
-        if (usingCredit && result.creditSessionToken) {
-          // Store the HMAC token so image calls can be authenticated.
-          creditSessionRef.current = result.creditSessionToken;
-          setUsedCreditBreakdown(true);
+        if (usingCredit) {
+          // Always refetch so the navbar credit count drops immediately.
           void refetchAccount();
+          if (result.creditSessionToken) {
+            // Store the session token so image calls can be authenticated.
+            creditSessionRef.current = result.creditSessionToken;
+            setUsedCreditBreakdown(true);
+          }
         }
       } else {
         data = await generateBreakdown(topic, apiKey);
       }
       setResult(data);
-      // canGenerateImages may have just become true; use isPro||usingCredit directly.
       if (isPro || usingCredit) {
-        void generateAllImages(data);
+        // Pass true to bypass the stale canGenerateImages state — it hasn't
+        // re-rendered yet after setUsedCreditBreakdown(true) above.
+        void generateAllImages(data, true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -787,7 +791,7 @@ export function Home() {
               )}
             </div>
 
-            {!isPro && upsellReason !== null ? (
+            {!isPro && !usedCreditBreakdown && upsellReason !== null ? (
               <UpgradePrompt
                 reason={upsellReason}
                 fullWidth

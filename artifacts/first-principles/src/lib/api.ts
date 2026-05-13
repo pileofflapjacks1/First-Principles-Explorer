@@ -38,9 +38,10 @@ export async function generateBreakdownOnServer(
     (err as Error & { status?: number }).status = response.status;
     throw err;
   }
-  const data: BreakdownResult = await response.json();
-  const creditSessionToken = response.headers.get("x-credit-session");
-  return { data, creditSessionToken };
+  const { creditSessionToken, ...rest } = (await response.json()) as BreakdownResult & {
+    creditSessionToken?: string;
+  };
+  return { data: rest as BreakdownResult, creditSessionToken: creditSessionToken ?? null };
 }
 
 export async function regenerateGapsOnServer(

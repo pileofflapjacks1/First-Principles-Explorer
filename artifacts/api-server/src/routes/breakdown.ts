@@ -92,6 +92,7 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
     // Create a DB-backed credit session so the frontend can call /images for
     // this specific breakdown. The session ID is a random UUID stored in
     // credit_breakdown_sessions. Image slots = number of prompts in the result.
+    let creditSessionToken: string | undefined;
     if (useCredit) {
       const imagesRemaining =
         data.breakdown.filter((b) => !!b.image_prompt).length +
@@ -103,9 +104,9 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
         imagesRemaining,
         expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
       });
-      res.setHeader("X-Credit-Session", sessionId);
+      creditSessionToken = sessionId;
     }
-    res.json(data);
+    res.json({ ...data, creditSessionToken });
   } catch (err) {
     req.log.error({ err }, "xAI breakdown failed");
     // Refund the reserved credit so a transient API error doesn't cost the user.
