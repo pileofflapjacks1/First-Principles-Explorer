@@ -4,6 +4,7 @@ import { Link, useSearch } from "wouter";
 import { useUser } from "@clerk/react";
 import {
   useGetMe,
+  getGetMeQueryKey,
   useCreateStripeCheckoutSession,
   useCreateStripePortalSession,
   useCreateCreditCheckoutSession,
@@ -16,8 +17,10 @@ const CREDIT_PACKS = [
 ];
 
 export function Pricing() {
-  const { user } = useUser();
-  const { data: account, refetch: refetchAccount } = useGetMe();
+  const { user, isSignedIn } = useUser();
+  const { data: account, refetch: refetchAccount } = useGetMe({
+    query: { enabled: !!isSignedIn, queryKey: getGetMeQueryKey() },
+  });
   const isPro = account?.isPro ?? false;
   const topicCredits = account?.topicCredits ?? 0;
   const [error, setError] = useState<string | null>(null);
