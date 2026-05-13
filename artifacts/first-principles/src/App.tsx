@@ -1,4 +1,4 @@
-import { ClerkProvider, SignIn, SignUp, Show } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, Show, useAuth } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
 import {
@@ -8,8 +8,10 @@ import {
   useLocation,
   Redirect,
 } from "wouter";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import { Home } from "@/pages/Home";
 import { Pricing } from "@/pages/Pricing";
@@ -106,6 +108,15 @@ function SignUpPage() {
 }
 
 
+function ClerkTokenSync() {
+  const { getToken } = useAuth();
+  useEffect(() => {
+    setAuthTokenGetter(getToken);
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -119,6 +130,7 @@ function ClerkProviderWithRoutes() {
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
+      <ClerkTokenSync />
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Switch>
