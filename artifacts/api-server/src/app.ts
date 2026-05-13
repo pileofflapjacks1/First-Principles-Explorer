@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { rateLimit } from "express-rate-limit";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import {
@@ -57,6 +58,37 @@ app.use(
   })),
 );
 
+// Rate limiting — protect expensive AI endpoints from abuse.
+// Breakdown: max 10 requests per IP per 10 minutes (generous for real users).
+const breakdownLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please wait a few minutes and try again." },
+});
+
+// Images: max 30 per IP per 10 minutes (~3 full breakdowns worth).
+const imageLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many image requests. Please wait a few minutes and try again." },
+});
+
+// General API: 300 req/min covers normal browsing without being exploitable.
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please slow down." },
+});
+
+app.use("/api/breakdown", breakdownLimiter);
+app.use("/api/images", imageLimiter);
+app.use("/api", generalLimiter);
 app.use("/api", router);
 
 export default app;
