@@ -170,6 +170,11 @@
   display: none !important;
 }
 
+/* Hide "Connected accounts" section */
+.cl-profileSection__connectedAccounts {
+  display: none !important;
+}
+
 /* Mermaid overrides for dark mode */
 .mermaid svg {
   background: transparent !important;
