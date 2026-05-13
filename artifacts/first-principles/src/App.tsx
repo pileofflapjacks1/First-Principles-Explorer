@@ -80,6 +80,8 @@ const clerkAppearance = {
     socialButtonsBlockButtonArrow: "!text-[hsl(213_31%_91%)]",
     badge: "!hidden",
     userButtonPopoverFooter: "!hidden",
+    userProfileModal: "!w-[min(860px,95vw)]",
+    userProfile: "!w-full",
   },
 };
 
