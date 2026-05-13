@@ -12,12 +12,10 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import ReactMarkdown from "react-markdown";
-import {
-  useAnalyzeProStock,
-  useFindMoreCompanies,
-} from "@workspace/api-client-react";
+import { useMutation } from "@tanstack/react-query";
 import type { Gap, ImageEntry } from "../types";
 import { ImageBlock } from "./ImageBlock";
+import { analyzeStockOnServer, findMoreCompaniesOnServer } from "../lib/api";
 
 interface GapCardProps {
   gap: Gap;
@@ -27,6 +25,7 @@ interface GapCardProps {
   onRegenerateImage?: () => void;
   upsellReason?: "signed-out" | "free-tier" | null;
   isPro?: boolean;
+  creditSessionToken?: string | null;
 }
 
 const GAP_COLORS = [
@@ -75,7 +74,11 @@ export function GapCard({
   onRegenerateImage,
   upsellReason,
   isPro,
+  creditSessionToken,
 }: GapCardProps) {
+  // "Can use Pro features" — true for actual Pro/admin users AND for free
+  // users who unlocked this breakdown by spending a credit.
+  const canUsePro = !!isPro;
   const [showCompanies, setShowCompanies] = useState(true);
   const [analyses, setAnalyses] = useState<Record<string, AnalysisState>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -85,22 +88,26 @@ export function GapCard({
     error: null,
   });
 
-  const analyzeMutation = useAnalyzeProStock();
-  const findCompaniesMutation = useFindMoreCompanies();
+  const analyzeMutation = useMutation({
+    mutationFn: (vars: Parameters<typeof analyzeStockOnServer>[0]) =>
+      analyzeStockOnServer(vars, creditSessionToken),
+  });
+  const findCompaniesMutation = useMutation({
+    mutationFn: (vars: Parameters<typeof findMoreCompaniesOnServer>[0]) =>
+      findMoreCompaniesOnServer(vars, creditSessionToken),
+  });
 
   function handleAskGrok() {
-    if (!isPro) return;
+    if (!canUsePro) return;
     const existingTickers = (gap.public_companies ?? []).map((c) => c.ticker);
     setExtraCompanies({ loading: true, companies: [], error: null });
     findCompaniesMutation.mutate(
       {
-        data: {
-          topic,
-          gapTitle: gap.gap_title,
-          gapWhyExists: gap.why_exists,
-          gapInnovationPotential: gap.innovation_potential,
-          existingTickers,
-        },
+        topic,
+        gapTitle: gap.gap_title,
+        gapWhyExists: gap.why_exists,
+        gapInnovationPotential: gap.innovation_potential,
+        existingTickers,
       },
       {
         onSuccess: (data) => {
@@ -130,7 +137,7 @@ export function GapCard({
   }
 
   function handleAnalyze(company: Gap["public_companies"][number]) {
-    if (!isPro) return;
+    if (!canUsePro) return;
     const key = company.ticker;
     setExpanded((prev) => ({ ...prev, [key]: true }));
     setAnalyses((prev) => ({
@@ -139,16 +146,14 @@ export function GapCard({
     }));
     analyzeMutation.mutate(
       {
-        data: {
-          name: company.name,
-          ticker: company.ticker,
-          exchange: company.exchange,
-          relevance: company.relevance,
-          topic,
-          gapTitle: gap.gap_title,
-          gapWhyExists: gap.why_exists,
-          gapInnovationPotential: gap.innovation_potential,
-        },
+        name: company.name,
+        ticker: company.ticker,
+        exchange: company.exchange,
+        relevance: company.relevance,
+        topic,
+        gapTitle: gap.gap_title,
+        gapWhyExists: gap.why_exists,
+        gapInnovationPotential: gap.innovation_potential,
       },
       {
         onSuccess: (data) => {
@@ -285,7 +290,7 @@ export function GapCard({
                         </p>
                         {/* Analyze action */}
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          {isPro ? (
+                          {canUsePro ? (
                             <button
                               onClick={() => handleAnalyze(company)}
                               disabled={analysis?.loading}
@@ -313,7 +318,7 @@ export function GapCard({
                               AI analysis (Pro)
                             </Link>
                           )}
-                          {analysis?.text && isPro && (
+                          {analysis?.text && canUsePro && (
                             <button
                               onClick={() =>
                                 setExpanded((prev) => ({
@@ -430,7 +435,7 @@ export function GapCard({
               Ask Grok for Other Companies
             </span>
           </div>
-          {isPro ? (
+          {canUsePro ? (
             <button
               onClick={handleAskGrok}
               disabled={extraCompanies.loading}

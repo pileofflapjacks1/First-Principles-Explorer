@@ -1,11 +1,34 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
+import { and, eq, gt } from "drizzle-orm";
+import { db, usersTable, creditBreakdownSessionsTable } from "@workspace/db";
+import type { Request } from "express";
 import { AnalyzeProStockBody, FindMoreCompaniesBody } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
 import { analyzeStockWithXai, findMoreCompaniesWithXai } from "../lib/xai-text";
 
 const router: IRouter = Router();
+
+/**
+ * Returns true if the request carries a valid (non-expired, user-owned) credit
+ * breakdown session. Credit-session users get unmetered access to the
+ * analysis/find-companies endpoints for the duration of the session — these
+ * features are part of the same paid breakdown bundle as images.
+ */
+async function hasValidCreditSession(req: Request, userId: string): Promise<boolean> {
+  const sessionId = req.headers["x-credit-session"] as string | undefined;
+  if (!sessionId) return false;
+  const [session] = await db
+    .select({ id: creditBreakdownSessionsTable.id })
+    .from(creditBreakdownSessionsTable)
+    .where(
+      and(
+        eq(creditBreakdownSessionsTable.id, sessionId),
+        eq(creditBreakdownSessionsTable.userId, userId),
+        gt(creditBreakdownSessionsTable.expiresAt, new Date()),
+      ),
+    );
+  return !!session;
+}
 
 router.post(
   "/stocks/find-companies",
@@ -27,8 +50,13 @@ router.post(
       return;
     }
     if (!user.isPro && !user.isAdmin) {
-      res.status(402).json({ error: "Finding companies requires the Pro tier." });
-      return;
+      const allowedViaCredit = await hasValidCreditSession(req, user.id);
+      if (!allowedViaCredit) {
+        res.status(402).json({
+          error: "Finding companies requires the Pro tier or a valid credit session.",
+        });
+        return;
+      }
     }
 
     const xaiKey = process.env["XAI_API_KEY"];
@@ -68,8 +96,13 @@ router.post(
       return;
     }
     if (!user.isPro && !user.isAdmin) {
-      res.status(402).json({ error: "Stock analysis requires the Pro tier." });
-      return;
+      const allowedViaCredit = await hasValidCreditSession(req, user.id);
+      if (!allowedViaCredit) {
+        res.status(402).json({
+          error: "Stock analysis requires the Pro tier or a valid credit session.",
+        });
+        return;
+      }
     }
 
     const xaiKey = process.env["XAI_API_KEY"];

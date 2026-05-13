@@ -44,6 +44,51 @@ export async function generateBreakdownOnServer(
   return { data: rest as BreakdownResult, creditSessionToken: creditSessionToken ?? null };
 }
 
+export async function analyzeStockOnServer(
+  data: {
+    name: string;
+    ticker: string;
+    exchange: string;
+    relevance: string;
+    topic: string;
+    gapTitle: string;
+    gapWhyExists: string;
+    gapInnovationPotential: string;
+  },
+  creditSessionToken?: string | null,
+): Promise<{ analysis: string }> {
+  const headers: Record<string, string> = {};
+  if (creditSessionToken) headers["x-credit-session"] = creditSessionToken;
+  return customFetch<{ analysis: string }>("/api/stocks/analyze", {
+    method: "POST",
+    body: JSON.stringify(data),
+    credentials: "include",
+    headers,
+  });
+}
+
+export async function findMoreCompaniesOnServer(
+  data: {
+    topic: string;
+    gapTitle: string;
+    gapWhyExists: string;
+    gapInnovationPotential: string;
+    existingTickers: string[];
+  },
+  creditSessionToken?: string | null,
+): Promise<{ companies: Array<{ name: string; ticker: string; exchange: string; relevance: string }> }> {
+  const headers: Record<string, string> = {};
+  if (creditSessionToken) headers["x-credit-session"] = creditSessionToken;
+  return customFetch<{
+    companies: Array<{ name: string; ticker: string; exchange: string; relevance: string }>;
+  }>("/api/stocks/find-companies", {
+    method: "POST",
+    body: JSON.stringify(data),
+    credentials: "include",
+    headers,
+  });
+}
+
 export async function regenerateGapsOnServer(
   topic: string,
   breakdownTitles: string[],
