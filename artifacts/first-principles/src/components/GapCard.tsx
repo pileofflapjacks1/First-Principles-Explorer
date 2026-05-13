@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import ReactMarkdown from "react-markdown";
-import { useAnalyzeProStock } from "@workspace/api-client-react";
+import { useAnalyzeProStock, useFindMoreCompanies } from "@workspace/api-client-react";
 import type { Gap, ImageEntry } from "../types";
 import { ImageBlock } from "./ImageBlock";
 
@@ -51,6 +51,19 @@ interface AnalysisState {
   error: string | null;
 }
 
+interface ExtraCompany {
+  name: string;
+  ticker: string;
+  exchange: string;
+  relevance: string;
+}
+
+interface ExtraCompaniesState {
+  loading: boolean;
+  companies: ExtraCompany[];
+  error: string | null;
+}
+
 export function GapCard({
   gap,
   topic,
@@ -63,12 +76,46 @@ export function GapCard({
   const [showCompanies, setShowCompanies] = useState(true);
   const [analyses, setAnalyses] = useState<Record<string, AnalysisState>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [extraCompanies, setExtraCompanies] = useState<ExtraCompaniesState>({
+    loading: false,
+    companies: [],
+    error: null,
+  });
 
   const analyzeMutation = useAnalyzeProStock();
+  const findCompaniesMutation = useFindMoreCompanies();
 
-  function handleFindCompanies() {
-    const query = encodeURIComponent(gap.search_query + " startup OR company OR venture");
-    window.open(`https://www.google.com/search?q=${query}`, "_blank", "noopener,noreferrer");
+  function handleAskGrok() {
+    if (!isPro) return;
+    const existingTickers = (gap.public_companies ?? []).map((c) => c.ticker);
+    setExtraCompanies({ loading: true, companies: [], error: null });
+    findCompaniesMutation.mutate(
+      {
+        data: {
+          topic,
+          gapTitle: gap.gap_title,
+          gapWhyExists: gap.why_exists,
+          gapInnovationPotential: gap.innovation_potential,
+          existingTickers,
+        },
+      },
+      {
+        onSuccess: (data) => {
+          setExtraCompanies({
+            loading: false,
+            companies: data.companies ?? [],
+            error: null,
+          });
+        },
+        onError: () => {
+          setExtraCompanies({
+            loading: false,
+            companies: [],
+            error: "Grok couldn't find companies. Please try again.",
+          });
+        },
+      },
+    );
   }
 
   function handleStockResearch(ticker: string) {
@@ -360,15 +407,90 @@ export function GapCard({
         </div>
       )}
 
-      {/* Footer buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={handleFindCompanies}
-          className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] font-semibold rounded-lg transition-colors text-xs"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Find More Companies
-        </button>
+      {/* Ask Grok for more companies */}
+      <div className="border border-[hsl(216_34%_17%)] rounded-lg overflow-hidden">
+        <div className="px-3 py-2 bg-[hsl(223_47%_11%)] flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[hsl(280_65%_75%)]" />
+            <span className="text-xs font-semibold text-[hsl(213_31%_91%)]">
+              Ask Grok for Other Companies
+            </span>
+          </div>
+          {isPro ? (
+            <button
+              onClick={handleAskGrok}
+              disabled={extraCompanies.loading}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(280_65%_60%/0.18)] hover:bg-[hsl(280_65%_60%/0.30)] border border-[hsl(280_65%_60%/0.4)] text-[10px] font-semibold text-[hsl(280_65%_85%)] transition-colors disabled:opacity-60"
+            >
+              {extraCompanies.loading ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : extraCompanies.companies.length > 0 ? (
+                <RefreshCw className="w-3 h-3" />
+              ) : (
+                <Sparkles className="w-3 h-3" />
+              )}
+              {extraCompanies.loading
+                ? "Asking Grok…"
+                : extraCompanies.companies.length > 0
+                  ? "Ask Again"
+                  : "Ask Grok"}
+            </button>
+          ) : (
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(280_65%_60%/0.1)] hover:bg-[hsl(280_65%_60%/0.2)] border border-[hsl(280_65%_60%/0.3)] text-[10px] font-semibold text-[hsl(280_65%_85%)] transition-colors"
+            >
+              <Sparkles className="w-3 h-3" />
+              Pro only
+            </Link>
+          )}
+        </div>
+
+        {/* Results area */}
+        {extraCompanies.loading && (
+          <div className="flex items-center gap-2 px-3 py-3 text-xs text-[hsl(215.4_16.3%_66.9%)] bg-[hsl(224_71%_7%)]">
+            <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+            Grok is researching companies…
+          </div>
+        )}
+
+        {extraCompanies.error && (
+          <div className="px-3 py-2 bg-[hsl(224_71%_7%)]">
+            <p className="text-[11px] text-[hsl(0_85%_70%)]">{extraCompanies.error}</p>
+          </div>
+        )}
+
+        {extraCompanies.companies.length > 0 && (
+          <div className="divide-y divide-[hsl(216_34%_17%)]">
+            {extraCompanies.companies.map((company, i) => (
+              <div key={i} className="flex items-start gap-3 px-3 py-2.5 bg-[hsl(224_71%_7%)]">
+                <button
+                  onClick={() => handleStockResearch(company.ticker)}
+                  title="Open on Yahoo Finance"
+                  className="shrink-0 mt-0.5 group"
+                >
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-mono font-bold text-xs bg-[hsl(280_65%_60%/0.12)] text-[hsl(280_65%_80%)] border border-[hsl(280_65%_60%/0.25)] group-hover:bg-[hsl(280_65%_60%/0.22)] transition-colors">
+                    {company.ticker}
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </span>
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold text-[hsl(213_31%_91%)] truncate">
+                      {company.name}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-[hsl(215.4_16.3%_36.9%)]">
+                      {EXCHANGES[company.exchange] ?? company.exchange}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[hsl(215.4_16.3%_56.9%)] leading-snug mt-0.5">
+                    {company.relevance}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

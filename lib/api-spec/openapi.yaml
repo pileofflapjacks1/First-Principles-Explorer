@@ -129,6 +129,30 @@ paths:
           description: Pro tier required
         "502":
           description: Upstream model error
+  /stocks/find-companies:
+    post:
+      operationId: findMoreCompanies
+      tags: [stocks]
+      summary: Ask Grok to find additional publicly traded companies working on an innovation gap (Pro tier required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindMoreCompaniesInput"
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FindMoreCompaniesResult"
+        "401":
+          description: Unauthorized
+        "402":
+          description: Pro tier required
+        "502":
+          description: Upstream model error
   /stocks/analyze:
     post:
       operationId: analyzeProStock
@@ -286,6 +310,47 @@ components:
           type: array
           items:
             type: string
+    FindMoreCompaniesInput:
+      type: object
+      required:
+        - topic
+        - gapTitle
+        - gapWhyExists
+        - gapInnovationPotential
+        - existingTickers
+      properties:
+        topic:
+          type: string
+          minLength: 1
+        gapTitle:
+          type: string
+          minLength: 1
+        gapWhyExists:
+          type: string
+        gapInnovationPotential:
+          type: string
+        existingTickers:
+          type: array
+          items:
+            type: string
+    FindMoreCompaniesResult:
+      type: object
+      required: [companies]
+      properties:
+        companies:
+          type: array
+          items:
+            type: object
+            required: [name, ticker, exchange, relevance]
+            properties:
+              name:
+                type: string
+              ticker:
+                type: string
+              exchange:
+                type: string
+              relevance:
+                type: string
     StockAnalysisInput:
       type: object
       required:

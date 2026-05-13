@@ -213,6 +213,50 @@ export async function analyzeStockWithXai(
   return stripFences(content);
 }
 
+/** Find additional publicly traded companies working on a specific innovation gap */
+const FIND_COMPANIES_SYSTEM_PROMPT = `You are a world-class investment research analyst. Given an innovation gap, identify additional publicly traded companies that are actively working on or well-positioned for it. Focus on companies NOT already on the provided list. Only include companies with real, verified stock tickers. Output ONLY a valid JSON array, no markdown, no code fences.`;
+
+export async function findMoreCompaniesWithXai(
+  params: {
+    topic: string;
+    gapTitle: string;
+    gapWhyExists: string;
+    gapInnovationPotential: string;
+    existingTickers: string[];
+  },
+  apiKey: string,
+  options: XaiOptions = {},
+): Promise<GapCompany[]> {
+  const exclusionNote =
+    params.existingTickers.length > 0
+      ? `Do NOT include these already-listed companies: ${params.existingTickers.join(", ")}.`
+      : "";
+
+  const userPrompt = [
+    `Topic context: ${params.topic}`,
+    `Innovation gap: ${params.gapTitle}`,
+    `Why the gap exists: ${params.gapWhyExists}`,
+    `Innovation potential: ${params.gapInnovationPotential}`,
+    exclusionNote,
+    "",
+    "Return 3-5 additional publicly traded companies as a JSON array:",
+    '[{"name":"string","ticker":"string","exchange":"string","relevance":"string (1 sentence on their involvement)"}]',
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const content = await chatCompletion(
+    apiKey,
+    [
+      { role: "system", content: FIND_COMPANIES_SYSTEM_PROMPT },
+      { role: "user", content: userPrompt },
+    ],
+    { temperature: 0.6, max_tokens: 1000, ...options },
+  );
+
+  return parseJsonLoose<GapCompany[]>(content, "array");
+}
+
 /** Regenerate innovation gaps */
 export async function regenerateGapsWithXai(
   topic: string,

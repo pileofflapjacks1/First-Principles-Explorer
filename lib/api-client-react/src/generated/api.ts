@@ -20,6 +20,8 @@ import type {
   Account,
   BreakdownInput,
   CreditCheckoutRequest,
+  FindMoreCompaniesInput,
+  FindMoreCompaniesResult,
   GapsInput,
   GenerateProBreakdown200,
   GeneratedImage,
@@ -436,6 +438,92 @@ export const useRegenerateProGaps = <
   TContext
 > => {
   return useMutation(getRegenerateProGapsMutationOptions(options));
+};
+
+/**
+ * @summary Ask Grok to find additional publicly traded companies working on an innovation gap (Pro tier required)
+ */
+export const getFindMoreCompaniesUrl = () => {
+  return `/api/stocks/find-companies`;
+};
+
+export const findMoreCompanies = async (
+  findMoreCompaniesInput: FindMoreCompaniesInput,
+  options?: RequestInit,
+): Promise<FindMoreCompaniesResult> => {
+  return customFetch<FindMoreCompaniesResult>(getFindMoreCompaniesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(findMoreCompaniesInput),
+  });
+};
+
+export const getFindMoreCompaniesMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof findMoreCompanies>>,
+    TError,
+    { data: BodyType<FindMoreCompaniesInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof findMoreCompanies>>,
+  TError,
+  { data: BodyType<FindMoreCompaniesInput> },
+  TContext
+> => {
+  const mutationKey = ["findMoreCompanies"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof findMoreCompanies>>,
+    { data: BodyType<FindMoreCompaniesInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return findMoreCompanies(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FindMoreCompaniesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof findMoreCompanies>>
+>;
+export type FindMoreCompaniesMutationBody = BodyType<FindMoreCompaniesInput>;
+export type FindMoreCompaniesMutationError = ErrorType<void>;
+
+/**
+ * @summary Ask Grok to find additional publicly traded companies working on an innovation gap (Pro tier required)
+ */
+export const useFindMoreCompanies = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof findMoreCompanies>>,
+    TError,
+    { data: BodyType<FindMoreCompaniesInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof findMoreCompanies>>,
+  TError,
+  { data: BodyType<FindMoreCompaniesInput> },
+  TContext
+> => {
+  return useMutation(getFindMoreCompaniesMutationOptions(options));
 };
 
 /**

@@ -67,6 +67,29 @@ export const RegenerateProGapsResponse = zod.object({
 });
 
 /**
+ * @summary Ask Grok to find additional publicly traded companies working on an innovation gap (Pro tier required)
+ */
+
+export const FindMoreCompaniesBody = zod.object({
+  topic: zod.string().min(1),
+  gapTitle: zod.string().min(1),
+  gapWhyExists: zod.string(),
+  gapInnovationPotential: zod.string(),
+  existingTickers: zod.array(zod.string()),
+});
+
+export const FindMoreCompaniesResponse = zod.object({
+  companies: zod.array(
+    zod.object({
+      name: zod.string(),
+      ticker: zod.string(),
+      exchange: zod.string(),
+      relevance: zod.string(),
+    }),
+  ),
+});
+
+/**
  * @summary Generate an AI analysis of a public company in the context of an innovation gap (Pro tier required)
  */
 

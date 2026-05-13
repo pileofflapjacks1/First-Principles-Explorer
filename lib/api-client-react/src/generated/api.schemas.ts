@@ -44,6 +44,27 @@ export interface GapsInput {
   breakdownTitles: string[];
 }
 
+export interface FindMoreCompaniesInput {
+  /** @minLength 1 */
+  topic: string;
+  /** @minLength 1 */
+  gapTitle: string;
+  gapWhyExists: string;
+  gapInnovationPotential: string;
+  existingTickers: string[];
+}
+
+export type FindMoreCompaniesResultCompaniesItem = {
+  name: string;
+  ticker: string;
+  exchange: string;
+  relevance: string;
+};
+
+export interface FindMoreCompaniesResult {
+  companies: FindMoreCompaniesResultCompaniesItem[];
+}
+
 export interface StockAnalysisInput {
   /** @minLength 1 */
   name: string;
