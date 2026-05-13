@@ -52,6 +52,9 @@ export async function generateBreakdown(
     if (response.status === 401) {
       throw new Error("Invalid API key. Please check your xAI Grok API key.");
     }
+    if (response.status === 400 && error.toLowerCase().includes("api key")) {
+      throw new Error("Invalid API key. Please check your xAI Grok API key.");
+    }
     if (response.status === 429) {
       throw new Error("Rate limit exceeded. Please wait a moment and try again.");
     }
