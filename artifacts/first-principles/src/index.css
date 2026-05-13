@@ -151,6 +151,19 @@
   }
 }
 
+/* Clerk UserProfile modal — override the global cardBox width constraint */
+@layer clerk {
+  .cl-userProfileModal .cl-cardBox {
+    width: min(860px, 95vw) !important;
+    max-width: none !important;
+  }
+
+  .cl-userProfileModal .cl-modalContent {
+    width: min(860px, 95vw) !important;
+    max-width: none !important;
+  }
+}
+
 /* Mermaid overrides for dark mode */
 .mermaid svg {
   background: transparent !important;
