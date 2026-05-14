@@ -14,9 +14,9 @@ const PRO_PRICE_ANNUAL_CENTS = 10800; // $108/yr — 25% off $144
 const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
 
 const CREDIT_PACKS: Record<"1" | "5" | "10", { cents: number; credits: number; label: string }> = {
-  "1": { cents: 200, credits: 1, label: "1 Topic Credit" },
-  "5": { cents: 800, credits: 5, label: "5 Topic Credits" },
-  "10": { cents: 1500, credits: 10, label: "10 Topic Credits" },
+  "1": { cents: 300, credits: 1, label: "1 Topic Credit" },
+  "5": { cents: 1200, credits: 5, label: "5 Topic Credits" },
+  "10": { cents: 2200, credits: 10, label: "10 Topic Credits" },
 };
 
 type BillingInterval = "month" | "year";

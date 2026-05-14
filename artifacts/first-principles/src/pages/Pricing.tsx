@@ -11,9 +11,9 @@ import {
 } from "@workspace/api-client-react";
 
 const CREDIT_PACKS = [
-  { pack: "1" as const, credits: 1, price: "$2", priceNote: "one-time" },
-  { pack: "5" as const, credits: 5, price: "$8", priceNote: "one-time · save 20%" },
-  { pack: "10" as const, credits: 10, price: "$15", priceNote: "one-time · best value" },
+  { pack: "1" as const, credits: 1, price: "$3", priceNote: "one-time" },
+  { pack: "5" as const, credits: 5, price: "$12", priceNote: "one-time · save 20%" },
+  { pack: "10" as const, credits: 10, price: "$22", priceNote: "one-time · best value" },
 ];
 
 export function Pricing() {
