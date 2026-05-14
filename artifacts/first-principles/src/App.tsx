@@ -17,6 +17,7 @@ import { Home } from "@/pages/Home";
 import { Pricing } from "@/pages/Pricing";
 import { Terms } from "@/pages/Terms";
 import { Privacy } from "@/pages/Privacy";
+import { Products } from "@/pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -156,6 +157,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/pricing" component={Pricing} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
+            <Route path="/products" component={Products} />
             <Route component={NotFound} />
           </Switch>
         </TooltipProvider>

@@ -173,6 +173,9 @@ export function Privacy() {
           <Link href="/terms" className="hover:text-[hsl(213_31%_71%)] transition-colors">
             Terms of Service
           </Link>
+          <Link href="/products" className="hover:text-[hsl(213_31%_71%)] transition-colors">
+            Products &amp; Services
+          </Link>
           <Link href="/" className="hover:text-[hsl(213_31%_71%)] transition-colors">
             Home
           </Link>

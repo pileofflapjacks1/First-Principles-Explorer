@@ -325,6 +325,10 @@ export function Pricing() {
           <Link href="/privacy" className="hover:text-[hsl(215.4_16.3%_56.9%)] transition-colors">
             Privacy Policy
           </Link>
+          <span>·</span>
+          <Link href="/products" className="hover:text-[hsl(215.4_16.3%_56.9%)] transition-colors">
+            Products &amp; Services
+          </Link>
         </div>
       </div>
     </div>
