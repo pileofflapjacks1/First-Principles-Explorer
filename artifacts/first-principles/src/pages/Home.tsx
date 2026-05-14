@@ -885,6 +885,28 @@ export function Home() {
         <ApiKeyModal onSave={handleApiKeySave} onClose={() => setShowApiEdit(false)} isEdit />
       )}
 
+      <footer className="mt-16 border-t border-[hsl(216_34%_17%)] py-6">
+        <div className="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+          <p className="text-xs text-[hsl(215.4_16.3%_36.9%)]">
+            © {new Date().getFullYear()} FirstPrinciples Explorer
+          </p>
+          <div className="flex flex-wrap gap-4 text-xs text-[hsl(215.4_16.3%_46.9%)]">
+            <Link href="/pricing" className="hover:text-[hsl(215.4_16.3%_66.9%)] transition-colors">
+              Pricing
+            </Link>
+            <Link href="/products" className="hover:text-[hsl(215.4_16.3%_66.9%)] transition-colors">
+              Products &amp; Services
+            </Link>
+            <Link href="/terms" className="hover:text-[hsl(215.4_16.3%_66.9%)] transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="hover:text-[hsl(215.4_16.3%_66.9%)] transition-colors">
+              Privacy Policy
+            </Link>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }
