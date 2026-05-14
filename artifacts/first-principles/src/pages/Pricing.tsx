@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Atom, Check, Sparkles, ArrowLeft, Loader2, Zap, ChevronRight } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useUser } from "@clerk/react";
@@ -25,6 +25,11 @@ export function Pricing() {
   const topicCredits = account?.topicCredits ?? 0;
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
+  // Local in-flight flags — always false on mount, so buttons are never
+  // disabled by stale React Query mutation cache state from a prior navigation.
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [portalPending, setPortalPending] = useState(false);
+  const [creditPending, setCreditPending] = useState(false);
 
   const search = useSearch();
   const params = new URLSearchParams(search);
@@ -34,14 +39,14 @@ export function Pricing() {
   const checkoutMutation = useCreateStripeCheckoutSession({
     mutation: {
       onSuccess: (data) => { window.location.href = data.url; },
-      onError: () => setError("We couldn't start checkout. Please try again in a moment."),
+      onError: () => { setCheckoutPending(false); setError("We couldn't start checkout. Please try again in a moment."); },
     },
   });
 
   const portalMutation = useCreateStripePortalSession({
     mutation: {
       onSuccess: (data) => { window.location.href = data.url; },
-      onError: () => setError("We couldn't open the billing portal. Please try again."),
+      onError: () => { setPortalPending(false); setError("We couldn't open the billing portal. Please try again."); },
     },
   });
 
@@ -51,9 +56,20 @@ export function Pricing() {
         await refetchAccount();
         window.location.href = data.url;
       },
-      onError: () => setError("We couldn't start checkout. Please try again in a moment."),
+      onError: () => { setCreditPending(false); setError("We couldn't start checkout. Please try again in a moment."); },
     },
   });
+
+  // When the user presses Back from Stripe checkout, the browser may restore
+  // this page from the back-forward cache (bfcache) with React state frozen
+  // mid-flight. Force a reload to reset all state cleanly.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[hsl(224_71%_4%)] text-[hsl(213_31%_91%)]">
@@ -188,11 +204,11 @@ export function Pricing() {
                 </div>
                 <button
                   type="button"
-                  disabled={portalMutation.isPending}
-                  onClick={() => { setError(null); portalMutation.mutate(); }}
+                  disabled={portalPending}
+                  onClick={() => { setError(null); setPortalPending(true); portalMutation.mutate(); }}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(224_71%_10%)] text-sm font-semibold transition-colors disabled:opacity-60"
                 >
-                  {portalMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {portalPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Manage subscription
                 </button>
               </div>
@@ -200,11 +216,11 @@ export function Pricing() {
               <div className="space-y-2">
                 <button
                   type="button"
-                  disabled={checkoutMutation.isPending}
-                  onClick={() => { setError(null); checkoutMutation.mutate({ data: { interval: billingInterval } }); }}
+                  disabled={checkoutPending}
+                  onClick={() => { setError(null); setCheckoutPending(true); checkoutMutation.mutate({ data: { interval: billingInterval } }); }}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
                 >
-                  {checkoutMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {checkoutPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Upgrade to Pro
                 </button>
                 <p className="text-[10px] text-[hsl(215.4_16.3%_46.9%)] text-center">
@@ -261,11 +277,11 @@ export function Pricing() {
                   </ul>
                   <button
                     type="button"
-                    disabled={creditMutation.isPending}
-                    onClick={() => { setError(null); creditMutation.mutate({ data: { pack: item.pack } }); }}
+                    disabled={creditPending}
+                    onClick={() => { setError(null); setCreditPending(true); creditMutation.mutate({ data: { pack: item.pack } }); }}
                     className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
                   >
-                    {creditMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {creditPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Buy {item.credits} credit{item.credits > 1 ? "s" : ""}
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
