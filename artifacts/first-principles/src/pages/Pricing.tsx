@@ -293,11 +293,14 @@ export function Pricing() {
               Secure checkout via Stripe · No subscription required ·{" "}
               <button
                 type="button"
+                disabled={checkoutPending}
                 onClick={() => {
+                  if (checkoutPending) return;
                   setError(null);
+                  setCheckoutPending(true);
                   checkoutMutation.mutate({ data: { interval: billingInterval } });
                 }}
-                className="underline hover:text-[hsl(213_31%_71%)] transition-colors"
+                className="underline hover:text-[hsl(213_31%_71%)] transition-colors disabled:opacity-60"
               >
                 Subscribe to Pro for unlimited access
               </button>
