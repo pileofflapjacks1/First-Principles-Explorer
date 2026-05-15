@@ -134,12 +134,13 @@ export function Pricing() {
             <div>
               <p className="text-xs uppercase tracking-wider text-[hsl(215.4_16.3%_46.9%)]">Free</p>
               <p className="text-3xl font-bold mt-1">$0</p>
-              <p className="text-xs text-[hsl(215.4_16.3%_56.9%)]">Bring your own xAI key for text generation</p>
+              <p className="text-xs text-[hsl(215.4_16.3%_56.9%)]">Browse the app, no signup required</p>
             </div>
             <ul className="space-y-2 text-sm text-[hsl(215.4_16.3%_76.9%)] flex-1">
-              <Feature>Hierarchical first-principles breakdown</Feature>
-              <Feature>Interactive Mermaid flowchart</Feature>
-              <Feature>Grokipedia "learn more" links</Feature>
+              <Feature>View the transistor example breakdown</Feature>
+              <Feature>Explore the interactive flowchart</Feature>
+              <Feature>See what a full breakdown looks like</Feature>
+              <Feature muted>No AI breakdowns</Feature>
               <Feature muted>No innovation gap analysis</Feature>
               <Feature muted>No AI image generation</Feature>
             </ul>

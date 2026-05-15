@@ -7,7 +7,6 @@ import {
   Copy,
   Check,
   RefreshCw,
-  Key,
   Sparkles,
   Crown,
   Zap,
@@ -22,14 +21,12 @@ import {
 import { getGetMeQueryOptions } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import type { BreakdownResult, ImageEntry } from "../types";
-import { generateBreakdown } from "../lib/grok";
 import {
   generateImageOnServer,
   generateBreakdownOnServer,
   regenerateGapsOnServer,
 } from "../lib/api";
 import { TRANSISTOR_EXAMPLE } from "../data/transistorExample";
-import { ApiKeyModal } from "../components/ApiKeyModal";
 import { AtomSpinner } from "../components/AtomSpinner";
 import { BreakdownCard } from "../components/BreakdownCard";
 import { MermaidChart } from "../components/MermaidChart";
@@ -52,11 +49,6 @@ const gapKey = (index: number) => `gap-${index}`;
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export function Home() {
-  const [apiKey, setApiKey] = useState<string>(
-    () => localStorage.getItem("xai_api_key") ?? ""
-  );
-  const [showApiModal, setShowApiModal] = useState(false);
-  const [showApiEdit, setShowApiEdit] = useState(false);
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
@@ -99,12 +91,6 @@ export function Home() {
         : null;
   // Pro users always get images. Free users who ran a credit breakdown this session also get them.
   const canGenerateImages = isPro || usedCreditBreakdown;
-
-  function handleApiKeySave(key: string) {
-    setApiKey(key);
-    setShowApiModal(false);
-    setShowApiEdit(false);
-  }
 
   function setImageEntry(key: string, patch: Partial<ImageEntry>) {
     setImages((prev) => ({
@@ -186,7 +172,7 @@ export function Home() {
     void refetchAccount();
   }
 
-  async function runBreakdown(topic: string, useServerKey: boolean) {
+  async function runBreakdown(topic: string) {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -198,31 +184,24 @@ export function Home() {
     setCreditReceiptDismissed(false);
     generationRef.current++;
 
-    const usingCredit = useServerKey && !isPro;
+    const usingCredit = !isPro;
 
     try {
-      let data: BreakdownResult;
-      if (useServerKey) {
-        const result = await generateBreakdownOnServer(topic);
-        data = result.data;
-        if (usingCredit) {
-          // Always refetch so the navbar credit count drops immediately.
-          void refetchAccount();
-          if (result.creditSessionToken) {
-            // Store the session token so image calls can be authenticated.
-            creditSessionRef.current = result.creditSessionToken;
-            setUsedCreditBreakdown(true);
-          }
+      const result = await generateBreakdownOnServer(topic);
+      const data = result.data;
+      if (usingCredit) {
+        // Always refetch so the navbar credit count drops immediately.
+        void refetchAccount();
+        if (result.creditSessionToken) {
+          // Store the session token so image calls can be authenticated.
+          creditSessionRef.current = result.creditSessionToken;
+          setUsedCreditBreakdown(true);
         }
-      } else {
-        data = await generateBreakdown(topic, apiKey);
       }
       setResult(data);
-      if (isPro || usingCredit) {
-        // Pass true to bypass the stale canGenerateImages state — it hasn't
-        // re-rendered yet after setUsedCreditBreakdown(true) above.
-        void generateAllImages(data, true);
-      }
+      // Pass true to bypass the stale canGenerateImages state — it hasn't
+      // re-rendered yet after setUsedCreditBreakdown(true) above.
+      void generateAllImages(data, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -234,27 +213,19 @@ export function Home() {
     const topic = (customPrompt ?? prompt).trim();
     if (!topic) return;
 
-    // Pro users always use the server key.
+    // Pro users go straight through.
     if (isPro) {
-      await runBreakdown(topic, true);
+      await runBreakdown(topic);
       return;
     }
 
-    // Free user with credits — show confirmation so the credit unlocks the
-    // full experience (images + gaps). The banner offers an opt-out for
-    // users who also have a BYO key and would rather not spend a credit.
+    // Free user with credits — show confirmation before spending one.
     if (topicCredits > 0) {
       setPendingCreditTopic(topic);
       return;
     }
 
-    // Free user with a BYO key (and no credits) — use it directly.
-    if (apiKey) {
-      await runBreakdown(topic, false);
-      return;
-    }
-
-    // No key, no credits — show the no-credits prompt.
+    // No credits — show the prompt to buy credits or upgrade.
     setShowNoCreditsPrompt(true);
   }
 
@@ -262,14 +233,7 @@ export function Home() {
     if (!pendingCreditTopic) return;
     const topic = pendingCreditTopic;
     setPendingCreditTopic(null);
-    await runBreakdown(topic, true);
-  }
-
-  async function handleUseApiKeyInstead() {
-    if (!pendingCreditTopic || !apiKey) return;
-    const topic = pendingCreditTopic;
-    setPendingCreditTopic(null);
-    await runBreakdown(topic, false);
+    await runBreakdown(topic);
   }
 
   async function handleRegenerateGaps() {
@@ -377,16 +341,6 @@ export function Home() {
           </div>
 
           <div className="flex items-center gap-2">
-            {apiKey && !isPro && (
-              <button
-                onClick={() => setShowApiEdit(true)}
-                title="Update API key"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-[hsl(215.4_16.3%_56.9%)] hover:text-[hsl(213_31%_91%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
-              >
-                <Key className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">API Key</span>
-              </button>
-            )}
             {hasResult && (
               <button
                 onClick={() => {
@@ -508,7 +462,7 @@ export function Home() {
                 onClick={loadExample}
                 className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(210_100%_66%)] transition-colors underline underline-offset-2"
               >
-                Load transistor example (no API key needed)
+                Load transistor example
               </button>
             </div>
           </div>
@@ -535,15 +489,6 @@ export function Home() {
                 >
                   Proceed (use 1 credit)
                 </button>
-                {apiKey && (
-                  <button
-                    onClick={handleUseApiKeyInstead}
-                    className="px-4 py-2 rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] text-sm text-[hsl(213_31%_85%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
-                    title="Run a text-only breakdown using your xAI API key — no credit spent, no images or gap cards."
-                  >
-                    Use my API key instead
-                  </button>
-                )}
                 <button
                   onClick={() => setPendingCreditTopic(null)}
                   className="px-4 py-2 rounded-xl border border-[hsl(216_34%_17%)] text-sm text-[hsl(215.4_16.3%_66.9%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
@@ -561,22 +506,22 @@ export function Home() {
                 <Sparkles className="w-4 h-4 text-[hsl(280_65%_80%)] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-[hsl(213_31%_91%)]">
-                    You need a credit or API key to continue
+                    You need credits or a Pro subscription to continue
                   </p>
                   <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
-                    Pick one option below to run a server-hosted breakdown.
+                    Pick an option below to run a full server-hosted breakdown.
                   </p>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <Link
-                  href="/pricing#credits"
+                  href="/pricing"
                   className="flex items-center gap-2.5 p-3 rounded-xl border border-[hsl(38_92%_50%/0.35)] bg-[hsl(38_92%_50%/0.08)] hover:bg-[hsl(38_92%_50%/0.15)] transition-colors group"
                 >
                   <Zap className="w-5 h-5 text-[hsl(38_92%_60%)] shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-[hsl(38_92%_75%)]">Buy topic credits</p>
-                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $2 · no subscription</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $3 · no subscription</p>
                   </div>
                 </Link>
                 <Link
@@ -590,14 +535,7 @@ export function Home() {
                   </div>
                 </Link>
               </div>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  onClick={() => { setShowNoCreditsPrompt(false); setShowApiModal(true); }}
-                  className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] underline underline-offset-2 transition-colors"
-                >
-                  Use your own xAI API key instead
-                </button>
-                <span className="text-[hsl(215.4_16.3%_26.9%)]">·</span>
+              <div className="flex justify-end pt-1">
                 <button
                   onClick={() => setShowNoCreditsPrompt(false)}
                   className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors"
@@ -873,13 +811,6 @@ export function Home() {
             </div>
           </div>
         </div>
-      )}
-
-      {showApiModal && (
-        <ApiKeyModal onSave={handleApiKeySave} />
-      )}
-      {showApiEdit && (
-        <ApiKeyModal onSave={handleApiKeySave} onClose={() => setShowApiEdit(false)} isEdit />
       )}
 
       <footer className="mt-16 border-t border-[hsl(216_34%_17%)] py-6">
