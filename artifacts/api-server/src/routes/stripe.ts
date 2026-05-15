@@ -9,13 +9,16 @@ import {
 import { requireAuth } from "../middlewares/auth";
 import { getStripeSync, getUncachableStripeClient } from "../lib/stripeClient";
 
-const PRO_PRICE_MONTHLY_CENTS = 1200;
-const PRO_PRICE_ANNUAL_CENTS = 10800; // $108/yr — 25% off $144
+const PRO_PRICE_MONTHLY_CENTS = 999;
+const PRO_PRICE_ANNUAL_CENTS = 9900; // $99/yr — ~17% off $119.88
 const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
 
-const CREDIT_PACKS: Record<"1" | "10", { cents: number; credits: number; label: string }> = {
-  "1": { cents: 300, credits: 1, label: "1 Topic Credit" },
-  "10": { cents: 2200, credits: 10, label: "10 Topic Credits" },
+type CreditPackKey = "1" | "5" | "10" | "20";
+const CREDIT_PACKS: Record<CreditPackKey, { cents: number; credits: number; label: string }> = {
+  "1": { cents: 199, credits: 1, label: "1 Topic Credit" },
+  "5": { cents: 899, credits: 5, label: "5 Topic Credits" },
+  "10": { cents: 1699, credits: 10, label: "10 Topic Credits" },
+  "20": { cents: 2999, credits: 20, label: "20 Topic Credits" },
 };
 
 type BillingInterval = "month" | "year";
@@ -334,7 +337,7 @@ router.post(
       return;
     }
 
-    const pack = CREDIT_PACKS[parsed.data.pack as "1" | "10"];
+    const pack = CREDIT_PACKS[parsed.data.pack as CreditPackKey];
     if (!pack) {
       res.status(400).json({ error: "Invalid pack selection" });
       return;

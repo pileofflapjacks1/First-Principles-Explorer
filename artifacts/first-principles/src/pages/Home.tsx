@@ -48,11 +48,16 @@ const gapKey = (index: number) => `gap-${index}`;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+type BreakdownReceipt =
+  | { kind: "free"; freeRemaining: number }
+  | { kind: "credit"; creditsRemaining: number };
+
 export function Home() {
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
-  const [creditReceiptDismissed, setCreditReceiptDismissed] = useState(false);
+  const [receipt, setReceipt] = useState<BreakdownReceipt | null>(null);
+  const [receiptDismissed, setReceiptDismissed] = useState(false);
   // Stores the HMAC session token issued by /breakdown for credit users.
   // A ref (not state) so all closures in generateOne/generateAllImages always see the latest value.
   const creditSessionRef = useRef<string | null>(null);
@@ -81,6 +86,9 @@ export function Home() {
   const monthlyLimit = account?.monthlyImageLimit ?? 0;
   const monthlyUsed = account?.imagesGeneratedThisMonth ?? 0;
   const topicCredits = account?.topicCredits ?? 0;
+  const freeBreakdownsUsed = account?.freeBreakdownsUsedThisMonth ?? 0;
+  const freeBreakdownsLimit = account?.freeBreakdownsPerMonth ?? 2;
+  const freeBreakdownsRemaining = Math.max(0, freeBreakdownsLimit - freeBreakdownsUsed);
 
   const upsellReason: "signed-out" | "free-tier" | null = !userLoaded
     ? null
@@ -89,7 +97,7 @@ export function Home() {
       : !isPro
         ? "free-tier"
         : null;
-  // Pro users always get images. Free users who ran a credit breakdown this session also get them.
+  // Pro users always get images. Free users who used a free or paid credit breakdown this session also get them.
   const canGenerateImages = isPro || usedCreditBreakdown;
 
   function setImageEntry(key: string, patch: Partial<ImageEntry>) {
@@ -181,21 +189,30 @@ export function Home() {
     // Reset credit session at the start of each new breakdown.
     creditSessionRef.current = null;
     setUsedCreditBreakdown(false);
-    setCreditReceiptDismissed(false);
+    setReceipt(null);
+    setReceiptDismissed(false);
     generationRef.current++;
 
-    const usingCredit = !isPro;
+    const usingNonPro = !isPro;
 
     try {
       const result = await generateBreakdownOnServer(topic);
       const data = result.data;
-      if (usingCredit) {
-        // Always refetch so the navbar credit count drops immediately.
-        void refetchAccount();
+      if (usingNonPro) {
+        // Always refetch so the navbar quota dropdown updates immediately.
+        const refreshed = await refetchAccount();
         if (result.creditSessionToken) {
-          // Store the session token so image calls can be authenticated.
           creditSessionRef.current = result.creditSessionToken;
           setUsedCreditBreakdown(true);
+        }
+        // Build the receipt based on which quota was consumed.
+        const fresh = refreshed.data;
+        if (result.usedCredit) {
+          setReceipt({ kind: "credit", creditsRemaining: fresh?.topicCredits ?? 0 });
+        } else if (result.usedFreeBreakdown) {
+          const used = fresh?.freeBreakdownsUsedThisMonth ?? 0;
+          const limit = fresh?.freeBreakdownsPerMonth ?? freeBreakdownsLimit;
+          setReceipt({ kind: "free", freeRemaining: Math.max(0, limit - used) });
         }
       }
       setResult(data);
@@ -219,13 +236,19 @@ export function Home() {
       return;
     }
 
-    // Free user with credits — show confirmation before spending one.
+    // Free user has free breakdowns left this month — run with no friction.
+    if (freeBreakdownsRemaining > 0) {
+      await runBreakdown(topic);
+      return;
+    }
+
+    // Out of free breakdowns but has credits — confirm before spending one.
     if (topicCredits > 0) {
       setPendingCreditTopic(topic);
       return;
     }
 
-    // No credits — show the prompt to buy credits or upgrade.
+    // No free breakdowns and no credits — prompt to upgrade or buy credits.
     setShowNoCreditsPrompt(true);
   }
 
@@ -373,6 +396,15 @@ export function Home() {
                   <Zap className="w-3 h-3" />
                   {topicCredits} credit{topicCredits !== 1 ? "s" : ""}
                 </Link>
+              ) : freeBreakdownsRemaining > 0 ? (
+                <Link
+                  href="/pricing"
+                  title="Upgrade for unlimited breakdowns"
+                  className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(160_60%_45%/0.15)] border border-[hsl(160_60%_45%/0.35)] text-[10px] font-bold text-[hsl(160_60%_70%)] hover:bg-[hsl(160_60%_45%/0.25)] transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {freeBreakdownsRemaining}/{freeBreakdownsLimit} free
+                </Link>
               ) : (
                 <Link
                   href="/pricing"
@@ -477,7 +509,7 @@ export function Home() {
                     1 credit will be used
                   </p>
                   <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
-                    This will run a full server-hosted breakdown of &ldquo;{pendingCreditTopic}&rdquo; including innovation gaps and AI images.
+                    You're out of free breakdowns this month. This will use 1 of your topic credits to run a full breakdown of &ldquo;{pendingCreditTopic}&rdquo;, including innovation gaps and AI images.
                     You have {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.
                   </p>
                 </div>
@@ -506,10 +538,10 @@ export function Home() {
                 <Sparkles className="w-4 h-4 text-[hsl(280_65%_80%)] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-[hsl(213_31%_91%)]">
-                    You need credits or a Pro subscription to continue
+                    You've used all {freeBreakdownsLimit} free breakdowns this month
                   </p>
                   <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
-                    Pick an option below to run a full server-hosted breakdown.
+                    Free breakdowns reset on the 1st of each month. To keep exploring now, buy topic credits or upgrade to Pro.
                   </p>
                 </div>
               </div>
@@ -521,7 +553,7 @@ export function Home() {
                   <Zap className="w-5 h-5 text-[hsl(38_92%_60%)] shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-[hsl(38_92%_75%)]">Buy topic credits</p>
-                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $3 · no subscription</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $1.99 · one-time, never expire</p>
                   </div>
                 </Link>
                 <Link
@@ -531,7 +563,7 @@ export function Home() {
                   <Crown className="w-5 h-5 text-[hsl(280_65%_75%)] shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-[hsl(280_65%_85%)]">Upgrade to Pro</p>
-                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">$12/mo · unlimited breakdowns</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">From $8.25/mo · unlimited breakdowns</p>
                   </div>
                 </Link>
               </div>
@@ -590,13 +622,22 @@ export function Home() {
                 <p className="text-sm text-[hsl(215.4_16.3%_56.9%)]">
                   {result.breakdown.length} levels from fundamentals to application
                 </p>
-                {usedCreditBreakdown && (
+                {usedCreditBreakdown && receipt?.kind === "credit" && (
                   <Link
                     href="/pricing"
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(38_92%_50%/0.12)] border border-[hsl(38_92%_50%/0.35)] text-[hsl(38_92%_65%)] text-xs font-medium hover:bg-[hsl(38_92%_50%/0.22)] hover:text-[hsl(38_92%_80%)] transition-colors"
                   >
                     <Zap className="w-3 h-3" />
                     {topicCredits} credit{topicCredits !== 1 ? "s" : ""} left
+                  </Link>
+                )}
+                {usedCreditBreakdown && receipt?.kind === "free" && (
+                  <Link
+                    href="/pricing"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(160_60%_45%/0.12)] border border-[hsl(160_60%_45%/0.35)] text-[hsl(160_60%_70%)] text-xs font-medium hover:bg-[hsl(160_60%_45%/0.22)] transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {receipt.freeRemaining}/{freeBreakdownsLimit} free left this month
                   </Link>
                 )}
               </div>
@@ -622,26 +663,47 @@ export function Home() {
             </div>
           </div>
 
-          {/* Credit usage receipt */}
-          {usedCreditBreakdown && !creditReceiptDismissed && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[hsl(38_92%_50%/0.35)] bg-[hsl(38_92%_50%/0.07)]">
-              <Zap className="w-4 h-4 text-[hsl(38_92%_60%)] shrink-0" />
-              <p className="flex-1 text-sm text-[hsl(38_92%_75%)]">
-                <span className="font-semibold">1 credit used</span>
-                {" — "}
-                {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.{" "}
-                <Link href="/pricing" className="underline underline-offset-2 hover:text-[hsl(38_92%_90%)] transition-colors">
-                  Buy more
-                </Link>
-              </p>
-              <button
-                onClick={() => setCreditReceiptDismissed(true)}
-                aria-label="Dismiss"
-                className="shrink-0 text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors text-lg leading-none"
-              >
-                ×
-              </button>
-            </div>
+          {/* Usage receipt */}
+          {receipt && !receiptDismissed && (
+            receipt.kind === "credit" ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[hsl(38_92%_50%/0.35)] bg-[hsl(38_92%_50%/0.07)]">
+                <Zap className="w-4 h-4 text-[hsl(38_92%_60%)] shrink-0" />
+                <p className="flex-1 text-sm text-[hsl(38_92%_75%)]">
+                  <span className="font-semibold">1 credit used</span>
+                  {" — "}
+                  {receipt.creditsRemaining} credit{receipt.creditsRemaining !== 1 ? "s" : ""} remaining.{" "}
+                  <Link href="/pricing" className="underline underline-offset-2 hover:text-[hsl(38_92%_90%)] transition-colors">
+                    Buy more
+                  </Link>
+                </p>
+                <button
+                  onClick={() => setReceiptDismissed(true)}
+                  aria-label="Dismiss"
+                  className="shrink-0 text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[hsl(160_60%_45%/0.35)] bg-[hsl(160_60%_45%/0.07)]">
+                <Sparkles className="w-4 h-4 text-[hsl(160_60%_70%)] shrink-0" />
+                <p className="flex-1 text-sm text-[hsl(160_60%_75%)]">
+                  <span className="font-semibold">Free breakdown used</span>
+                  {" — "}
+                  {receipt.freeRemaining} of {freeBreakdownsLimit} free breakdown{freeBreakdownsLimit !== 1 ? "s" : ""} left this month.{" "}
+                  <Link href="/pricing" className="underline underline-offset-2 hover:text-[hsl(160_60%_90%)] transition-colors">
+                    Go unlimited with Pro
+                  </Link>
+                </p>
+                <button
+                  onClick={() => setReceiptDismissed(true)}
+                  aria-label="Dismiss"
+                  className="shrink-0 text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )
           )}
 
           {/* Visuals notice */}

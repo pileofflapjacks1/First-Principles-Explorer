@@ -20,7 +20,12 @@ export async function generateImageOnServer(
 
 export async function generateBreakdownOnServer(
   topic: string,
-): Promise<{ data: BreakdownResult; creditSessionToken: string | null }> {
+): Promise<{
+  data: BreakdownResult;
+  creditSessionToken: string | null;
+  usedFreeBreakdown: boolean;
+  usedCredit: boolean;
+}> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   const token = await getAuthToken();
   if (token) headers["authorization"] = `Bearer ${token}`;
@@ -38,10 +43,18 @@ export async function generateBreakdownOnServer(
     (err as Error & { status?: number }).status = response.status;
     throw err;
   }
-  const { creditSessionToken, ...rest } = (await response.json()) as BreakdownResult & {
-    creditSessionToken?: string;
+  const { creditSessionToken, usedFreeBreakdown, usedCredit, ...rest } =
+    (await response.json()) as BreakdownResult & {
+      creditSessionToken?: string;
+      usedFreeBreakdown?: boolean;
+      usedCredit?: boolean;
+    };
+  return {
+    data: rest as BreakdownResult,
+    creditSessionToken: creditSessionToken ?? null,
+    usedFreeBreakdown: usedFreeBreakdown ?? false,
+    usedCredit: usedCredit ?? false,
   };
-  return { data: rest as BreakdownResult, creditSessionToken: creditSessionToken ?? null };
 }
 
 export async function analyzeStockOnServer(

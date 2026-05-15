@@ -9,6 +9,10 @@ export const usersTable = pgTable("users", {
   imageCountResetAt: timestamp("image_count_reset_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  freeBreakdownsUsed: integer("free_breakdowns_used").notNull().default(0),
+  freeBreakdownsResetAt: timestamp("free_breakdowns_reset_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   topicCredits: integer("topic_credits").notNull().default(0),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),

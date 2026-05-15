@@ -1,4 +1,5 @@
 export const PRO_MONTHLY_IMAGE_LIMIT = 100;
+export const FREE_BREAKDOWNS_PER_MONTH = 2;
 
 export function getMonthlyLimit(isPro: boolean): number {
   return isPro ? PRO_MONTHLY_IMAGE_LIMIT : 0;

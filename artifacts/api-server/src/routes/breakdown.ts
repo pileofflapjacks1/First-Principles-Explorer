@@ -11,6 +11,7 @@ import {
   generateBreakdownWithXai,
   regenerateGapsWithXai,
 } from "../lib/xai-text";
+import { FREE_BREAKDOWNS_PER_MONTH } from "../lib/usage";
 
 const router: IRouter = Router();
 
@@ -36,9 +37,9 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   }
 
   // Unauthenticated callers get 402 + creditsRequired (not 401) so the
-  // frontend can direct them to buy credits or sign in.
+  // frontend can direct them to sign in or buy credits.
   if (!req.userId) {
-    res.status(402).json({ error: "No credits remaining.", creditsRequired: true });
+    res.status(402).json({ error: "Sign in to get 2 free breakdowns per month.", creditsRequired: true });
     return;
   }
 
@@ -50,37 +51,69 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   }
   const { user } = result;
 
-  // Admins and Pro users go straight through with no credit checks.
-  // Free users: try to atomically reserve one credit before the expensive call.
+  // Admins and Pro users go straight through with no quota checks.
+  // Free users: try the free monthly quota first, then fall back to credits.
+  let useFreeBreakdown = false;
   let useCredit = false;
   if (!user.isPro && !user.isAdmin) {
-    // Attempt atomic decrement. If no row is affected, the user has no credits.
-    const updated = await db
+    // Atomically consume one free breakdown — combine the monthly reset and
+    // the increment into a single UPDATE so concurrent requests can never
+    // burst past the cap in the seconds around a month boundary.
+    const now = new Date();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const freeUpdated = await db
       .update(usersTable)
-      .set({ topicCredits: sql`topic_credits - 1` })
-      .where(and(eq(usersTable.id, userId), sql`topic_credits > 0`))
-      .returning({ topicCredits: usersTable.topicCredits });
+      .set({
+        freeBreakdownsUsed: sql`CASE WHEN free_breakdowns_reset_at < ${monthStart} THEN 1 ELSE free_breakdowns_used + 1 END`,
+        freeBreakdownsResetAt: sql`CASE WHEN free_breakdowns_reset_at < ${monthStart} THEN ${now} ELSE free_breakdowns_reset_at END`,
+      })
+      .where(
+        and(
+          eq(usersTable.id, userId),
+          sql`(free_breakdowns_reset_at < ${monthStart} OR free_breakdowns_used < ${FREE_BREAKDOWNS_PER_MONTH})`,
+        ),
+      )
+      .returning({ freeBreakdownsUsed: usersTable.freeBreakdownsUsed });
 
-    if (updated.length === 0) {
-      res.status(402).json({
-        error: "No credits remaining.",
-        creditsRequired: true,
-      });
-      return;
+    if (freeUpdated.length > 0) {
+      useFreeBreakdown = true;
+    } else {
+      // Out of free breakdowns — try to atomically reserve one credit.
+      const updated = await db
+        .update(usersTable)
+        .set({ topicCredits: sql`topic_credits - 1` })
+        .where(and(eq(usersTable.id, userId), sql`topic_credits > 0`))
+        .returning({ topicCredits: usersTable.topicCredits });
+
+      if (updated.length === 0) {
+        res.status(402).json({
+          error: "You've used all 2 free breakdowns this month. Buy credits or upgrade to Pro to continue.",
+          creditsRequired: true,
+        });
+        return;
+      }
+      useCredit = true;
     }
-    useCredit = true;
   }
 
-  const xaiKey = process.env["XAI_API_KEY"];
-  if (!xaiKey) {
-    req.log.error("XAI_API_KEY is not configured on the server");
-    // Refund the reserved credit so the user is not billed for a server error.
+  async function refundQuota(): Promise<void> {
     if (useCredit) {
       await db
         .update(usersTable)
         .set({ topicCredits: sql`topic_credits + 1` })
         .where(eq(usersTable.id, userId));
+    } else if (useFreeBreakdown) {
+      await db
+        .update(usersTable)
+        .set({ freeBreakdownsUsed: sql`GREATEST(free_breakdowns_used - 1, 0)` })
+        .where(eq(usersTable.id, userId));
     }
+  }
+
+  const xaiKey = process.env["XAI_API_KEY"];
+  if (!xaiKey) {
+    req.log.error("XAI_API_KEY is not configured on the server");
+    await refundQuota();
     res
       .status(500)
       .json({ error: "AI breakdown is not configured on the server." });
@@ -90,10 +123,10 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
     // Create a DB-backed credit session so the frontend can call /images for
-    // this specific breakdown. The session ID is a random UUID stored in
-    // credit_breakdown_sessions. Image slots = number of prompts in the result.
+    // this specific breakdown. Both free-tier and paid-credit breakdowns get
+    // a session so server-hosted images work for them.
     let creditSessionToken: string | undefined;
-    if (useCredit) {
+    if (useCredit || useFreeBreakdown) {
       const imagesRemaining =
         data.breakdown.filter((b) => !!b.image_prompt).length +
         (data.gaps ?? []).filter((g) => !!g.image_prompt).length;
@@ -106,16 +139,11 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
       });
       creditSessionToken = sessionId;
     }
-    res.json({ ...data, creditSessionToken });
+    res.json({ ...data, creditSessionToken, usedFreeBreakdown: useFreeBreakdown, usedCredit: useCredit });
   } catch (err) {
     req.log.error({ err }, "xAI breakdown failed");
-    // Refund the reserved credit so a transient API error doesn't cost the user.
-    if (useCredit) {
-      await db
-        .update(usersTable)
-        .set({ topicCredits: sql`topic_credits + 1` })
-        .where(eq(usersTable.id, userId));
-    }
+    // Refund the reserved quota so a transient API error doesn't cost the user.
+    await refundQuota();
     res
       .status(502)
       .json({ error: "Breakdown generation failed. Please try again." });

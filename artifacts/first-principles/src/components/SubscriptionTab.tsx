@@ -10,17 +10,18 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 const FREE_PERKS = [
-  { icon: Brain, text: "First-principles breakdown with your own xAI key" },
-  { icon: GitBranch, text: "Interactive Mermaid flowchart" },
-  { icon: BookOpen, text: "Grokipedia deep-dive links on every level" },
+  { icon: Brain, text: "2 full first-principles breakdowns every month" },
+  { icon: GitBranch, text: "Interactive Mermaid flowchart on every breakdown" },
+  { icon: Image, text: "4–6 AI-generated images per breakdown" },
+  { icon: BookOpen, text: "Basic innovation gap analysis + Grokipedia links" },
 ];
 
 const PRO_PERKS = [
-  { icon: Brain, text: "Server-hosted AI breakdowns — no API key needed" },
-  { icon: GitBranch, text: "Interactive Mermaid flowchart" },
+  { icon: Brain, text: "Unlimited server-hosted AI breakdowns — no API key needed" },
+  { icon: GitBranch, text: "Interactive Mermaid flowchart on every breakdown" },
   { icon: BookOpen, text: "Grokipedia deep-dive links on every level" },
-  { icon: Sparkles, text: "Innovation-gap cards with real publicly traded companies" },
-  { icon: Image, text: "AI concept-art images on every level and gap (100/month)" },
+  { icon: Sparkles, text: "Full Innovation Gap Cards with real publicly traded companies" },
+  { icon: Image, text: "80–100 AI images per month (fair-use limit)" },
 ];
 
 function formatDate(iso: string): string {
@@ -175,7 +176,7 @@ export function SubscriptionTab() {
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] text-sm font-semibold transition-colors"
           >
             <Sparkles className="w-4 h-4" />
-            Upgrade to Pro — $12/mo
+            Upgrade to Pro — from $8.25/mo
           </Link>
         )}
       </div>

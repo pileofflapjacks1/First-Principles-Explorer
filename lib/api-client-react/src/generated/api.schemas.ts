@@ -18,6 +18,8 @@ export interface Account {
   imagesGeneratedThisMonth: number;
   monthlyImageLimit: number;
   topicCredits: number;
+  freeBreakdownsUsedThisMonth: number;
+  freeBreakdownsPerMonth: number;
   /** @nullable */
   subscriptionStatus?: string | null;
   /** @nullable */
@@ -107,7 +109,9 @@ export type CreditCheckoutRequestPack =
 
 export const CreditCheckoutRequestPack = {
   NUMBER_1: "1",
+  NUMBER_5: "5",
   NUMBER_10: "10",
+  NUMBER_20: "20",
 } as const;
 
 export interface CreditCheckoutRequest {

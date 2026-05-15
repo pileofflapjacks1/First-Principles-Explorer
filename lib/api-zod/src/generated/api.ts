@@ -26,6 +26,8 @@ export const GetMeResponse = zod.object({
   imagesGeneratedThisMonth: zod.number(),
   monthlyImageLimit: zod.number(),
   topicCredits: zod.number(),
+  freeBreakdownsUsedThisMonth: zod.number(),
+  freeBreakdownsPerMonth: zod.number(),
   subscriptionStatus: zod.string().nullish(),
   subscriptionCurrentPeriodEnd: zod.coerce.date().nullish(),
 });
@@ -130,7 +132,7 @@ export const CreateStripeCheckoutSessionResponse = zod.object({
  * @summary Create a Stripe Checkout session for a one-time topic-credit pack
  */
 export const CreateCreditCheckoutSessionBody = zod.object({
-  pack: zod.enum(["1", "10"]),
+  pack: zod.enum(["1", "5", "10", "20"]),
 });
 
 export const CreateCreditCheckoutSessionResponse = zod.object({

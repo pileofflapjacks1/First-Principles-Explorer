@@ -259,6 +259,8 @@ components:
         - imagesGeneratedThisMonth
         - monthlyImageLimit
         - topicCredits
+        - freeBreakdownsUsedThisMonth
+        - freeBreakdownsPerMonth
       properties:
         userId:
           type: string
@@ -273,6 +275,10 @@ components:
         monthlyImageLimit:
           type: integer
         topicCredits:
+          type: integer
+        freeBreakdownsUsedThisMonth:
+          type: integer
+        freeBreakdownsPerMonth:
           type: integer
         subscriptionStatus:
           type: ["string", "null"]
@@ -411,4 +417,4 @@ components:
       properties:
         pack:
           type: string
-          enum: ["1", "10"]
+          enum: ["1", "5", "10", "20"]
