@@ -17,7 +17,7 @@ export function Terms() {
             <div className="w-7 h-7 rounded-lg bg-[hsl(210_100%_66%/0.15)] flex items-center justify-center">
               <Atom className="w-4 h-4 text-[hsl(210_100%_66%)]" />
             </div>
-            <span className="font-bold text-sm">FirstPrinciples Explorer</span>
+            <span className="font-bold text-sm">Zwyppy</span>
           </div>
         </div>
       </nav>
@@ -32,7 +32,7 @@ export function Terms() {
 
         <Section title="1. Acceptance of Terms">
           <p>
-            By accessing or using FirstPrinciples Explorer ("the Service"), you agree to be bound
+            By accessing or using Zwyppy ("the Service"), you agree to be bound
             by these Terms of Service. If you do not agree to these terms, please do not use the
             Service.
           </p>
@@ -40,7 +40,7 @@ export function Terms() {
 
         <Section title="2. Description of Service">
           <p>
-            FirstPrinciples Explorer is an AI-powered tool that generates hierarchical breakdowns
+            Zwyppy is an AI-powered tool that generates hierarchical breakdowns
             of topics from first principles, interactive flowcharts, innovation gap analysis, and
             AI-generated visuals using the xAI Grok API. The Service is offered on a free tier
             (bring-your-own API key) and a paid Pro tier.
@@ -117,8 +117,8 @@ export function Terms() {
 
         <Section title="7. Intellectual Property">
           <p>
-            The Service, including its design, code, and branding, is owned by FirstPrinciples
-            Explorer and protected by applicable intellectual property laws. Content you generate
+            The Service, including its design, code, and branding, is owned by Zwyppy
+            and protected by applicable intellectual property laws. Content you generate
             using the Service belongs to you, subject to any restrictions imposed by the underlying
             AI providers.
           </p>

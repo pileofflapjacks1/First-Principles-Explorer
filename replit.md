@@ -1,4 +1,4 @@
-# FirstPrinciples Explorer
+# Zwyppy: Your First Principles Explorer
 
 AI-powered first-principles breakdowns of any topic — hierarchical levels, interactive Mermaid flowcharts, innovation gap cards with public companies, and Grok Imagine visuals (Pro tier).
 

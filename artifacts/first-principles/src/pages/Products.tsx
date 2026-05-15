@@ -17,7 +17,7 @@ export function Products() {
             <div className="w-7 h-7 rounded-lg bg-[hsl(210_100%_66%/0.15)] flex items-center justify-center">
               <Atom className="w-4 h-4 text-[hsl(210_100%_66%)]" />
             </div>
-            <span className="font-bold text-sm">FirstPrinciples Explorer</span>
+            <span className="font-bold text-sm">Zwyppy</span>
           </div>
         </div>
       </nav>
@@ -29,7 +29,7 @@ export function Products() {
             Last updated: May 14, 2025
           </p>
           <p className="text-sm text-[hsl(215.4_16.3%_76.9%)] leading-relaxed mt-4">
-            FirstPrinciples Explorer is an AI-powered research tool that breaks down any topic into
+            Zwyppy is an AI-powered research tool that breaks down any topic into
             its fundamental principles — producing hierarchical concept maps, interactive Mermaid
             flowcharts, innovation-gap analysis, and AI-generated concept visuals. Below is a
             complete description of the products and services we offer.
@@ -61,7 +61,7 @@ export function Products() {
 
         <ProductCard
           icon={<Star className="w-5 h-5 text-[hsl(210_100%_66%)]" />}
-          title="FirstPrinciples Pro — Monthly Subscription"
+          title="Zwyppy Pro — Monthly Subscription"
           badge="$12.00 / month"
           badgeColor="hsl(210_100%_66%)"
         >
@@ -90,7 +90,7 @@ export function Products() {
 
         <ProductCard
           icon={<Star className="w-5 h-5 text-[hsl(280_65%_75%)]" />}
-          title="FirstPrinciples Pro — Annual Subscription"
+          title="Zwyppy Pro — Annual Subscription"
           badge="$108.00 / year ($9/month)"
           badgeColor="hsl(280_65%_75%)"
         >

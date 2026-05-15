@@ -338,7 +338,7 @@ export function Home() {
 
   async function handleCopyShare() {
     if (!result) return;
-    const shareText = `FirstPrinciples Explorer: ${result.topic}\n\nBreakdown levels:\n${result.breakdown.map((b) => `${b.level}. ${b.title}`).join("\n")}\n\nGenerated with FirstPrinciples Explorer`;
+    const shareText = `Zwyppy: ${result.topic}\n\nBreakdown levels:\n${result.breakdown.map((b) => `${b.level}. ${b.title}`).join("\n")}\n\nGenerated with Zwyppy — Your First Principles Explorer`;
     await navigator.clipboard.writeText(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -367,7 +367,7 @@ export function Home() {
               <Atom className="w-5 h-5 text-[hsl(210_100%_66%)]" />
             </div>
             <span className="font-bold text-[hsl(213_31%_91%)] text-sm hidden sm:block">
-              FirstPrinciples Explorer
+              Zwyppy
             </span>
           </div>
 
@@ -912,7 +912,7 @@ export function Home() {
           {/* Footer actions */}
           <div className="border-t border-[hsl(216_34%_17%)] pt-6 flex flex-wrap gap-3 items-center justify-between">
             <p className="text-xs text-[hsl(215.4_16.3%_36.9%)]">
-              Generated with xAI Grok + Grok Imagine · FirstPrinciples Explorer
+              Generated with xAI Grok + Grok Imagine · Zwyppy
             </p>
             <div className="flex gap-2">
               <button
@@ -940,7 +940,7 @@ export function Home() {
       <footer className="mt-16 border-t border-[hsl(216_34%_17%)] py-6">
         <div className="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
           <p className="text-xs text-[hsl(215.4_16.3%_36.9%)]">
-            © {new Date().getFullYear()} FirstPrinciples Explorer
+            © {new Date().getFullYear()} Zwyppy
           </p>
           <div className="flex flex-wrap gap-4 text-xs text-[hsl(215.4_16.3%_46.9%)]">
             <Link href="/pricing" className="hover:text-[hsl(215.4_16.3%_66.9%)] transition-colors">

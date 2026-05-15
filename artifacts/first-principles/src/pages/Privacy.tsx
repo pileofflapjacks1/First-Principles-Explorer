@@ -17,7 +17,7 @@ export function Privacy() {
             <div className="w-7 h-7 rounded-lg bg-[hsl(210_100%_66%/0.15)] flex items-center justify-center">
               <Atom className="w-4 h-4 text-[hsl(210_100%_66%)]" />
             </div>
-            <span className="font-bold text-sm">FirstPrinciples Explorer</span>
+            <span className="font-bold text-sm">Zwyppy</span>
           </div>
         </div>
       </nav>
