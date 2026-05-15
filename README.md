@@ -94,7 +94,6 @@ pnpm --filter @workspace/db run push        # After schema changes (dev)
 ## Related Projects & Skills
 
 - **Local First-Principles-Explorer Skill**: The core reasoning engine (`generateBreakdownWithXai`, hierarchical structuring, innovation gap identification, Mermaid generation) lives in your Grok environment as a skill. This web app is the polished, persistent, monetized experience layer on top.
-- **PharmaClaw / OpenClaw**: Sister projects exploring multi-agent systems for scientific domains.
 
 ## License
 
