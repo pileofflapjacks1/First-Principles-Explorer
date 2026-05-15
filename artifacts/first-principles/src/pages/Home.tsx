@@ -53,6 +53,7 @@ type BreakdownReceipt =
   | { kind: "credit"; creditsRemaining: number };
 
 export function Home() {
+  const [showSignedOutPrompt, setShowSignedOutPrompt] = useState(false);
   const [showNoCreditsPrompt, setShowNoCreditsPrompt] = useState(false);
   const [pendingCreditTopic, setPendingCreditTopic] = useState<string | null>(null);
   const [usedCreditBreakdown, setUsedCreditBreakdown] = useState(false);
@@ -229,6 +230,13 @@ export function Home() {
   async function handleSubmit(customPrompt?: string) {
     const topic = (customPrompt ?? prompt).trim();
     if (!topic) return;
+
+    // Signed-out users: invite them to sign in or load the demo instead of
+    // hitting the server and getting a generic 402.
+    if (userLoaded && !isSignedIn) {
+      setShowSignedOutPrompt(true);
+      return;
+    }
 
     // Pro users go straight through.
     if (isPro) {
@@ -498,6 +506,60 @@ export function Home() {
               </button>
             </div>
           </div>
+
+          {/* Signed-out prompt */}
+          {showSignedOutPrompt && (
+            <div className="w-full rounded-2xl border border-[hsl(210_100%_66%/0.35)] bg-gradient-to-r from-[hsl(210_100%_66%/0.08)] to-[hsl(280_65%_60%/0.04)] p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-[hsl(210_100%_75%)] shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-[hsl(213_31%_91%)]">
+                    Sign in to run your first breakdown
+                  </p>
+                  <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] mt-0.5">
+                    Create a free account to get 2 full server-hosted breakdowns every month — no credit card required.
+                    Or take a quick tour with the transistor example first.
+                  </p>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setShowSignedOutPrompt(false);
+                    openSignIn({ fallbackRedirectUrl: basePath || "/" });
+                  }}
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-[hsl(210_100%_66%)] hover:bg-[hsl(210_100%_58%)] text-[hsl(224_71%_4%)] transition-colors text-left"
+                >
+                  <Sparkles className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold">Sign in or sign up</p>
+                    <p className="text-[10px] opacity-80">Free · 2 breakdowns/month</p>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSignedOutPrompt(false);
+                    loadExample();
+                  }}
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-[hsl(216_34%_25%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(216_34%_17%)] transition-colors text-left"
+                >
+                  <Atom className="w-5 h-5 text-[hsl(210_100%_66%)] shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-[hsl(213_31%_91%)]">Load transistor example</p>
+                    <p className="text-[10px] text-[hsl(215.4_16.3%_56.9%)]">See what a full breakdown looks like</p>
+                  </div>
+                </button>
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  onClick={() => setShowSignedOutPrompt(false)}
+                  className="text-xs text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Credit confirmation banner */}
           {pendingCreditTopic && (
