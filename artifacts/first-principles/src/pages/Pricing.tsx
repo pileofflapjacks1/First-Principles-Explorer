@@ -25,8 +25,7 @@ export function Pricing() {
   const topicCredits = account?.topicCredits ?? 0;
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<"month" | "year">("month");
-  // Local in-flight flags — always false on mount, so buttons are never
-  // disabled by stale React Query mutation cache state from a prior navigation.
+  const [selectedPack, setSelectedPack] = useState<"1" | "5" | "10">("5");
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [portalPending, setPortalPending] = useState(false);
   const [creditPending, setCreditPending] = useState(false);
@@ -60,9 +59,6 @@ export function Pricing() {
     },
   });
 
-  // When the user presses Back from Stripe checkout, the browser may restore
-  // this page from the back-forward cache (bfcache) with React state frozen
-  // mid-flight. Force a reload to reset all state cleanly.
   useEffect(() => {
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted) window.location.reload();
@@ -70,6 +66,8 @@ export function Pricing() {
     window.addEventListener("pageshow", handlePageShow);
     return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
+
+  const activePack = CREDIT_PACKS.find((p) => p.pack === selectedPack)!;
 
   return (
     <div className="min-h-screen bg-[hsl(224_71%_4%)] text-[hsl(213_31%_91%)]">
@@ -125,31 +123,88 @@ export function Pricing() {
           </h1>
           <p className="text-[hsl(215.4_16.3%_66.9%)] text-base">
             Free covers the text breakdown, flowchart and Grokipedia links.
-            Pro adds innovation-gap analysis with publicly traded companies,
-            plus Grok Imagine visuals on every level and gap.
+            Credits or Pro adds innovation-gap analysis, stock insights, and AI visuals.
           </p>
         </div>
 
-        {/* Subscription cards */}
-        <div className="grid md:grid-cols-2 gap-4">
+        {/* Three-column pricing grid */}
+        <div className="grid md:grid-cols-3 gap-4 items-stretch">
+
           {/* Free */}
-          <div className="rounded-2xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] p-6 space-y-5">
+          <div className="rounded-2xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] p-6 flex flex-col space-y-5">
             <div>
               <p className="text-xs uppercase tracking-wider text-[hsl(215.4_16.3%_46.9%)]">Free</p>
               <p className="text-3xl font-bold mt-1">$0</p>
               <p className="text-xs text-[hsl(215.4_16.3%_56.9%)]">Bring your own xAI key for text generation</p>
             </div>
-            <ul className="space-y-2 text-sm text-[hsl(215.4_16.3%_76.9%)]">
+            <ul className="space-y-2 text-sm text-[hsl(215.4_16.3%_76.9%)] flex-1">
               <Feature>Hierarchical first-principles breakdown</Feature>
               <Feature>Interactive Mermaid flowchart</Feature>
               <Feature>Grokipedia "learn more" links</Feature>
               <Feature muted>No innovation gap analysis</Feature>
               <Feature muted>No AI image generation</Feature>
             </ul>
+            <div className="pt-1">
+              <div className="w-full text-center py-3 rounded-xl border border-[hsl(216_34%_17%)] text-sm text-[hsl(215.4_16.3%_46.9%)]">
+                Current plan
+              </div>
+            </div>
           </div>
 
+          {/* Topic Credits */}
+          {!isPro && (
+            <div className="rounded-2xl border border-[hsl(38_92%_50%/0.35)] bg-gradient-to-b from-[hsl(38_92%_50%/0.06)] to-[hsl(38_92%_50%/0.02)] p-6 flex flex-col space-y-5">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs uppercase tracking-wider text-[hsl(38_92%_65%)]">Topic Credits</p>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[hsl(38_92%_50%/0.15)] text-[hsl(38_92%_70%)] border border-[hsl(38_92%_50%/0.3)] font-semibold uppercase tracking-wide">One-time</span>
+                </div>
+                {/* Pack selector */}
+                <div className="inline-flex rounded-full border border-[hsl(38_92%_50%/0.3)] bg-[hsl(224_71%_4%)] p-0.5 text-[11px] mb-3">
+                  {CREDIT_PACKS.map((p) => (
+                    <button
+                      key={p.pack}
+                      type="button"
+                      onClick={() => setSelectedPack(p.pack)}
+                      className={`px-2.5 py-1 rounded-full transition-colors ${selectedPack === p.pack ? "bg-[hsl(38_92%_50%)] text-[hsl(224_71%_4%)] font-semibold" : "text-[hsl(215.4_16.3%_66.9%)] hover:text-[hsl(213_31%_91%)]"}`}
+                    >
+                      {p.credits} credit{p.credits > 1 ? "s" : ""}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-3xl font-bold">{activePack.price}</p>
+                <p className="text-xs text-[hsl(215.4_16.3%_56.9%)]">{activePack.priceNote}</p>
+              </div>
+              <ul className="space-y-2 text-sm text-[hsl(213_31%_91%)] flex-1">
+                <Feature zap>Full server-hosted breakdown</Feature>
+                <Feature zap>Innovation gap cards + companies</Feature>
+                <Feature zap>AI images for every level</Feature>
+                <Feature zap>No xAI key required</Feature>
+                <Feature zap>Credits never expire</Feature>
+              </ul>
+              {topicCredits > 0 && (
+                <p className="text-xs font-semibold text-[hsl(38_92%_70%)]">
+                  You have {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={creditPending}
+                onClick={() => { setError(null); setCreditPending(true); creditMutation.mutate({ data: { pack: activePack.pack } }); }}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
+              >
+                {creditPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Buy {activePack.credits} credit{activePack.credits > 1 ? "s" : ""} · {activePack.price}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <p className="text-[10px] text-[hsl(215.4_16.3%_46.9%)] text-center -mt-2">
+                Secure checkout via Stripe · No subscription required
+              </p>
+            </div>
+          )}
+
           {/* Pro */}
-          <div className="rounded-2xl border-2 border-[hsl(210_100%_66%/0.4)] bg-gradient-to-b from-[hsl(210_100%_66%/0.06)] to-[hsl(280_65%_60%/0.04)] p-6 space-y-5 relative">
+          <div className={`rounded-2xl border-2 border-[hsl(210_100%_66%/0.4)] bg-gradient-to-b from-[hsl(210_100%_66%/0.06)] to-[hsl(280_65%_60%/0.04)] p-6 flex flex-col space-y-5 relative ${isPro ? "md:col-span-2" : ""}`}>
             <div className="absolute -top-3 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(210_100%_66%)] text-[hsl(224_71%_4%)] text-[10px] font-bold uppercase tracking-wide">
               <Sparkles className="w-3 h-3" />
               Recommended
@@ -187,11 +242,10 @@ export function Pricing() {
                 </p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-[hsl(213_31%_91%)]">
+            <ul className="space-y-2 text-sm text-[hsl(213_31%_91%)] flex-1">
               <Feature>Everything in Free</Feature>
               <Feature highlight>Innovation gap cards with publicly traded companies</Feature>
               <Feature highlight>Grok Imagine visuals on every breakdown level</Feature>
-              <Feature highlight>Concept-art images for every gap</Feature>
               <Feature highlight>Click-to-fullsize, regenerate any image</Feature>
               <Feature>Up to 100 images/month</Feature>
               <Feature>We host the xAI key — no quota juggling</Feature>
@@ -233,81 +287,6 @@ export function Pricing() {
           </div>
         </div>
 
-        {/* Topic Credits section */}
-        {!isPro && (
-          <div id="credits" className="space-y-5">
-            <div className="text-center space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(38_92%_50%/0.1)] border border-[hsl(38_92%_50%/0.25)] text-xs text-[hsl(38_92%_70%)]">
-                <Zap className="w-3 h-3" />
-                Topic Credits
-              </div>
-              <h2 className="text-2xl font-bold">Try Pro breakdowns without a subscription</h2>
-              <p className="text-[hsl(215.4_16.3%_66.9%)] text-sm max-w-xl mx-auto">
-                Each credit lets you run one full server-hosted AI breakdown — gaps, visuals, and all —
-                without needing your own xAI API key. Credits never expire.
-              </p>
-              {topicCredits > 0 && (
-                <p className="text-sm font-semibold text-[hsl(38_92%_70%)]">
-                  You have {topicCredits} credit{topicCredits !== 1 ? "s" : ""} remaining.
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {CREDIT_PACKS.map((item) => (
-                <div
-                  key={item.pack}
-                  className="rounded-2xl border border-[hsl(38_92%_50%/0.25)] bg-[hsl(38_92%_50%/0.04)] p-5 space-y-4 flex flex-col"
-                >
-                  <div>
-                    <p className="text-2xl font-bold text-[hsl(213_31%_91%)]">{item.price}</p>
-                    <p className="text-xs text-[hsl(215.4_16.3%_56.9%)] mt-0.5">{item.priceNote}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-[hsl(38_92%_60%)] shrink-0" />
-                    <span className="text-sm font-semibold text-[hsl(213_31%_91%)]">
-                      {item.credits} topic credit{item.credits > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <ul className="text-xs text-[hsl(215.4_16.3%_76.9%)] space-y-1 flex-1">
-                    <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-[hsl(38_92%_60%)]" />Full server-hosted breakdown</li>
-                    <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-[hsl(38_92%_60%)]" />Innovation gaps included</li>
-                    <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-[hsl(38_92%_60%)]" />AI images included</li>
-                    <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-[hsl(38_92%_60%)]" />Credits never expire</li>
-                  </ul>
-                  <button
-                    type="button"
-                    disabled={creditPending}
-                    onClick={() => { setError(null); setCreditPending(true); creditMutation.mutate({ data: { pack: item.pack } }); }}
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[hsl(38_92%_50%)] hover:bg-[hsl(38_92%_44%)] text-[hsl(224_71%_4%)] text-sm font-bold transition-colors disabled:opacity-60"
-                  >
-                    {creditPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Buy {item.credits} credit{item.credits > 1 ? "s" : ""}
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-center text-xs text-[hsl(215.4_16.3%_46.9%)]">
-              Secure checkout via Stripe · No subscription required ·{" "}
-              <button
-                type="button"
-                disabled={checkoutPending}
-                onClick={() => {
-                  if (checkoutPending) return;
-                  setError(null);
-                  setCheckoutPending(true);
-                  checkoutMutation.mutate({ data: { interval: billingInterval } });
-                }}
-                className="underline hover:text-[hsl(213_31%_71%)] transition-colors disabled:opacity-60"
-              >
-                Subscribe to Pro for unlimited access
-              </button>
-            </p>
-          </div>
-        )}
-
         {isSignedIn && (
           <p className="text-center text-xs text-[hsl(215.4_16.3%_46.9%)]">
             Signed in as{" "}
@@ -339,14 +318,20 @@ function Feature({
   children,
   highlight,
   muted,
+  zap,
 }: {
   children: React.ReactNode;
   highlight?: boolean;
   muted?: boolean;
+  zap?: boolean;
 }) {
   return (
     <li className={`flex items-start gap-2 ${muted ? "opacity-50 line-through decoration-[hsl(215.4_16.3%_36.9%)]" : ""}`}>
-      <Check className={`w-4 h-4 shrink-0 mt-0.5 ${highlight ? "text-[hsl(280_65%_75%)]" : "text-[hsl(160_60%_60%)]"}`} />
+      {zap ? (
+        <Zap className="w-4 h-4 shrink-0 mt-0.5 text-[hsl(38_92%_60%)]" />
+      ) : (
+        <Check className={`w-4 h-4 shrink-0 mt-0.5 ${highlight ? "text-[hsl(280_65%_75%)]" : "text-[hsl(160_60%_60%)]"}`} />
+      )}
       <span>{children}</span>
     </li>
   );
