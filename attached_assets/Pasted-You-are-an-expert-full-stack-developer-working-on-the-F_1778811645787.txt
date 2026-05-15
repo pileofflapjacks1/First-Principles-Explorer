@@ -1,0 +1,82 @@
+You are an expert full-stack developer working on the First-Principles Explorer web app (currently at zwyppy.com).
+
+Current Pricing Model (to be replaced):
+- Free: $0 – Bring your own xAI key, text breakdowns + Mermaid only (no images, no gap analysis)
+- Topic Credits: $3 for 1 credit or $22 for 10 credits (one-time)
+- Pro: $12/month – Full features + up to 100 images/month
+
+Task: Completely replace the current pricing model with the new **Hybrid Pricing Model** described below. Update the frontend pricing page, backend logic, database schema (if needed), Stripe integration, and quota handling.
+
+### New Hybrid Pricing Model (Implement Exactly)
+
+**Tier 1: Free**
+- 2 free full topic breakdowns per month
+- Each free breakdown includes:
+  - Hierarchical first-principles text breakdown
+  - Interactive Mermaid flowchart
+  - 4–6 Grok Imagine images
+  - Basic innovation gap analysis
+- After 2 free breakdowns, show upgrade prompts
+
+**Tier 2: Credits (One-time purchase)**
+- Price: $1.99 per credit
+- 1 credit = 1 complete topic breakdown (full hierarchy + Mermaid + 8–12 high-quality images + full Innovation Gap Cards with relevant publicly traded companies)
+- Bulk discount options:
+  - 5 credits → $8.99
+  - 10 credits → $16.99  
+  - 20 credits → $29.99
+- Credits never expire
+- Users can buy credits anytime via Stripe (one-time payment)
+
+**Tier 3: Pro Subscription (Recommended)**
+- $9.99 per month
+- Annual option: $99/year (≈ $8.25/month, 17% savings)
+- Includes:
+  - Unlimited text breakdowns + Mermaid
+  - 80–100 images per month (use a soft fair-use limit with clear messaging)
+  - Full Innovation Gap Cards + company intelligence
+  - Hosted xAI API key (no quota juggling for user)
+  - Click-to-fullsize images + regenerate any image
+  - Priority support + early access to new features
+
+### Requirements
+
+1. **Pricing Page (Frontend)**
+   - Redesign the pricing page to clearly show the three tiers side-by-side
+   - Make "Pro" the most prominent with a "RECOMMENDED" badge
+   - Clearly explain what 1 credit includes
+   - Show the annual discount for Pro
+   - Make the UI modern, clean, and persuasive (dark theme consistent with current design)
+
+2. **Backend Logic**
+   - Update user quota system in PostgreSQL + Drizzle
+   - Track:
+     - Free breakdowns used this month
+     - Credit balance
+     - Pro subscription status + image quota
+   - Implement monthly reset for free tier and Pro image quota (UTC month)
+   - When user generates a breakdown:
+     - Check if they have free uses left → deduct from free
+     - Else check credit balance → deduct 1 credit
+     - Else check if Pro and under image limit
+
+3. **Stripe Integration**
+   - Keep existing Stripe Checkout + Customer Portal
+   - Add one-time payment options for the credit packs ($1.99, $8.99, $16.99, $29.99)
+   - Add subscription for Pro ($9.99/mo and $99/year)
+   - Update webhooks to handle both subscription status and credit purchases
+
+4. **Database Changes**
+   - Add/update fields as needed for:
+     - `free_breakdowns_used_this_month`
+     - `credits_balance`
+     - `pro_image_quota_used_this_month`
+     - `subscription_status` and `subscription_end_date`
+
+5. **General Rules**
+   - Make the pricing page extremely clear about value
+   - Add helpful tooltips or "What you get" sections
+   - Ensure smooth upgrade flow from Free → Credits or Pro
+   - Keep all existing features working
+
+Please implement this new hybrid pricing model completely and cleanly. After you're done, summarize all the changes you made.
