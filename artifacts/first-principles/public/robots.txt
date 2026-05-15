@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://first-principles-explorer.replit.app/sitemap.xml
