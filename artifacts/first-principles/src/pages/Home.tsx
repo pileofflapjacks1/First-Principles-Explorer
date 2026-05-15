@@ -839,9 +839,6 @@ export function Home() {
                     gap={gap}
                     topic={result.topic}
                     index={i}
-                    imageEntry={images[gapKey(i)]}
-                    onRegenerateImage={() => handleRegenerateGapImage(i, gap.image_prompt)}
-                    upsellReason={upsellReason}
                     isPro={canGenerateImages}
                     creditSessionToken={isPro ? null : creditSessionRef.current}
                   />

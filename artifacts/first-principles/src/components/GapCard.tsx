@@ -13,17 +13,13 @@ import {
 import { Link } from "wouter";
 import ReactMarkdown from "react-markdown";
 import { useMutation } from "@tanstack/react-query";
-import type { Gap, ImageEntry } from "../types";
-import { ImageBlock } from "./ImageBlock";
+import type { Gap } from "../types";
 import { analyzeStockOnServer, findMoreCompaniesOnServer } from "../lib/api";
 
 interface GapCardProps {
   gap: Gap;
   topic: string;
   index: number;
-  imageEntry?: ImageEntry;
-  onRegenerateImage?: () => void;
-  upsellReason?: "signed-out" | "free-tier" | null;
   isPro?: boolean;
   creditSessionToken?: string | null;
 }
@@ -70,9 +66,6 @@ export function GapCard({
   gap,
   topic,
   index,
-  imageEntry,
-  onRegenerateImage,
-  upsellReason,
   isPro,
   creditSessionToken,
 }: GapCardProps) {
@@ -196,17 +189,6 @@ export function GapCard({
           </p>
         </div>
       </div>
-
-      {/* Generated image (or upsell when not Pro) */}
-      {gap.image_prompt && (
-        <ImageBlock
-          imageEntry={imageEntry}
-          onRegenerate={onRegenerateImage ?? (() => {})}
-          caption={gap.gap_title}
-          compact
-          upsellReason={upsellReason ?? null}
-        />
-      )}
 
       {/* Why it exists */}
       <div className="space-y-3">
