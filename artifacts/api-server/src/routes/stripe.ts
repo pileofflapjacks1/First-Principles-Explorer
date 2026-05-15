@@ -13,9 +13,8 @@ const PRO_PRICE_MONTHLY_CENTS = 1200;
 const PRO_PRICE_ANNUAL_CENTS = 10800; // $108/yr — 25% off $144
 const PRO_PRODUCT_NAME = "FirstPrinciples Pro";
 
-const CREDIT_PACKS: Record<"1" | "5" | "10", { cents: number; credits: number; label: string }> = {
+const CREDIT_PACKS: Record<"1" | "10", { cents: number; credits: number; label: string }> = {
   "1": { cents: 300, credits: 1, label: "1 Topic Credit" },
-  "5": { cents: 1200, credits: 5, label: "5 Topic Credits" },
   "10": { cents: 2200, credits: 10, label: "10 Topic Credits" },
 };
 
@@ -335,7 +334,7 @@ router.post(
       return;
     }
 
-    const pack = CREDIT_PACKS[parsed.data.pack as "1" | "5" | "10"];
+    const pack = CREDIT_PACKS[parsed.data.pack as "1" | "10"];
     if (!pack) {
       res.status(400).json({ error: "Invalid pack selection" });
       return;

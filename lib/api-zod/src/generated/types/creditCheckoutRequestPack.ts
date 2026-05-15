@@ -11,6 +11,5 @@ export type CreditCheckoutRequestPack =
 
 export const CreditCheckoutRequestPack = {
   NUMBER_1: "1",
-  NUMBER_5: "5",
   NUMBER_10: "10",
 } as const;

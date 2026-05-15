@@ -411,4 +411,4 @@ components:
       properties:
         pack:
           type: string
-          enum: ["1", "5", "10"]
+          enum: ["1", "10"]
