@@ -39,7 +39,7 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   // Unauthenticated callers get 402 + creditsRequired (not 401) so the
   // frontend can direct them to sign in or buy credits.
   if (!req.userId) {
-    res.status(402).json({ error: "Sign in to get 2 free breakdowns per month.", creditsRequired: true });
+    res.status(402).json({ error: "Sign in to get 5 free breakdowns per month.", creditsRequired: true });
     return;
   }
 
@@ -87,7 +87,7 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
 
       if (updated.length === 0) {
         res.status(402).json({
-          error: "You've used all 2 free breakdowns this month. Buy credits or upgrade to Pro to continue.",
+          error: "You've used all 5 free breakdowns this month. Buy credits or upgrade to Pro to continue.",
           creditsRequired: true,
         });
         return;

@@ -533,7 +533,7 @@ export function Home() {
                   <Sparkles className="w-5 h-5 shrink-0" />
                   <div>
                     <p className="text-xs font-bold">Sign in or sign up</p>
-                    <p className="text-[10px] opacity-80">Free · 2 breakdowns/month</p>
+                    <p className="text-[10px] opacity-80">Free · 5 breakdowns/month</p>
                   </div>
                 </button>
                 <button
