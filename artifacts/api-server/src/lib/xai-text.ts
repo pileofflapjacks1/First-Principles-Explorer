@@ -127,7 +127,7 @@ async function chatCompletion(
   options: XaiOptions = {},
 ): Promise<string> {
   const body = {
-    model: options.model ?? "grok-3",
+    model: options.model ?? "grok-4.3",
     messages,
     temperature: options.temperature ?? 0.7,
     max_tokens: options.max_tokens ?? 5000,
