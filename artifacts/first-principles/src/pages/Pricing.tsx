@@ -152,7 +152,7 @@ export function Pricing() {
                 <span className="text-sm text-[hsl(215.4_16.3%_56.9%)]">/month</span>
               </div>
               <p className="text-xs text-[hsl(215.4_16.3%_56.9%)] mt-1">
-                2 full breakdowns every month. Resets at the start of each calendar month.
+                5 full breakdowns every month. Resets at the start of each calendar month.
               </p>
             </div>
             <ul className="space-y-2 text-sm text-[hsl(213_31%_85%)] flex-1">
