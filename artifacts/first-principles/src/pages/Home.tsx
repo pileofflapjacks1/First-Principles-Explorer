@@ -98,7 +98,8 @@ export function Home() {
       : !isPro
         ? "free-tier"
         : null;
-  // Pro users always get images. Free users who used a free or paid credit breakdown this session also get them.
+  // Pro users always get images. Non-Pro users only get images when they
+  // spend a paid credit on the breakdown (free monthly breakdowns are text-only).
   const canGenerateImages = isPro || usedCreditBreakdown;
 
   function setImageEntry(key: string, patch: Partial<ImageEntry>) {
@@ -780,8 +781,8 @@ export function Home() {
               <Sparkles className="w-4 h-4 text-[hsl(280_65%_80%)] shrink-0" />
               <p className="text-xs text-[hsl(213_31%_85%)] flex-1 min-w-[200px]">
                 {upsellReason === "signed-out"
-                  ? "Sign in and upgrade to Pro to generate AI visuals for every level and gap."
-                  : "Upgrade to Pro to generate AI visuals for every level and gap — no API key juggling."}
+                  ? "Sign in and upgrade to Pro — or buy credits — to generate AI visuals for every level and gap."
+                  : "Free breakdowns are text-only. Buy credits or go Pro to generate AI visuals for every level and gap."}
               </p>
               {upsellReason === "signed-out" ? (
                 <button

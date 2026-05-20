@@ -135,8 +135,8 @@ export function Pricing() {
             Simple, flexible pricing
           </h1>
           <p className="text-[hsl(215.4_16.3%_66.9%)] text-base max-w-2xl mx-auto">
-            Start with 5 free full breakdowns every month. Top up with one-time credits, or
-            go Pro for unlimited breakdowns plus high-quality AI visuals.
+            Start with 5 free full text breakdowns every month. Add AI visuals with one-time
+            credits, or go Pro for unlimited breakdowns plus high-quality images.
           </p>
         </div>
 
@@ -159,8 +159,8 @@ export function Pricing() {
               <Feature><b>5 free</b> full topic breakdowns per month</Feature>
               <Feature>Hierarchical first-principles text breakdown</Feature>
               <Feature>Interactive Mermaid flowchart</Feature>
-              <Feature>4–6 AI-generated images per breakdown</Feature>
               <Feature>Basic innovation gap analysis</Feature>
+              <Feature muted>AI-generated images (Pro or credits)</Feature>
             </ul>
             {isSignedIn && !isPro && (
               <p className="text-xs text-[hsl(215.4_16.3%_66.9%)] -mt-2">

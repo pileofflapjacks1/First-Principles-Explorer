@@ -123,10 +123,11 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
   try {
     const data = await generateBreakdownWithXai(parsed.data.topic, xaiKey);
     // Create a DB-backed credit session so the frontend can call /images for
-    // this specific breakdown. Both free-tier and paid-credit breakdowns get
-    // a session so server-hosted images work for them.
+    // this specific breakdown. Only paid-credit breakdowns get a session —
+    // free-tier breakdowns are text-only (no server-hosted image generation)
+    // to keep API costs in check.
     let creditSessionToken: string | undefined;
-    if (useCredit || useFreeBreakdown) {
+    if (useCredit) {
       const imagesRemaining =
         data.breakdown.filter((b) => !!b.image_prompt).length +
         (data.gaps ?? []).filter((g) => !!g.image_prompt).length;
