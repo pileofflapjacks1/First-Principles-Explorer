@@ -60,19 +60,21 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
 
   if (!url) return null;
 
+  const imgMaxH = compact ? "max-h-[140px]" : "max-h-[180px]";
+
   return (
     <div className="mt-3 space-y-1.5">
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`group relative block rounded-xl overflow-hidden border border-[hsl(216_34%_17%)] hover:border-[hsl(210_100%_66%/0.4)] transition-colors bg-[hsl(223_47%_11%)] ${maxHeightClass}`}
+        className="group relative block rounded-xl overflow-hidden border border-[hsl(216_34%_17%)] hover:border-[hsl(210_100%_66%/0.4)] transition-colors bg-[hsl(223_47%_11%)]"
         onClick={(e) => e.stopPropagation()}
       >
         <img
           src={url}
           alt={caption ?? "Generated visual"}
-          className="h-full w-full object-cover object-center"
+          className={`w-full h-auto object-contain ${imgMaxH}`}
           loading="lazy"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
