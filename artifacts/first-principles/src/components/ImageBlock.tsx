@@ -22,10 +22,10 @@ export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellR
     return null;
   }
   const { url, loading, error } = imageEntry;
-  const aspect = compact ? "aspect-[4/3]" : "aspect-video";
-  // Cap the rendered height of generated images so they don't dominate cards.
-  // Non-compact (main breakdown levels) gets a taller cap than compact (gaps).
-  const maxHeightClass = compact ? "max-h-[200px]" : "max-h-[260px] md:max-h-[300px]";
+  // Grok Imagine defaults to a square-ish image; match that so it doesn't
+  // get cropped. Slightly smaller max heights to keep cards compact.
+  const aspect = compact ? "aspect-[4/3]" : "aspect-square";
+  const maxHeightClass = compact ? "max-h-[160px]" : "max-h-[200px] md:max-h-[240px]";
 
   if (loading) {
     return (
@@ -80,7 +80,7 @@ export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellR
         <img
           src={url}
           alt={caption ?? "Generated visual"}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover object-center"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
