@@ -10,10 +10,6 @@ interface ImageBlockProps {
 }
 
 export function ImageBlock({ imageEntry, caption, compact, upsellReason }: ImageBlockProps) {
-  // Only show the upsell when no image slot exists for this card. If an
-  // imageEntry is present (loading/error/url), the user has already unlocked
-  // image generation for this breakdown (Pro or via a credit) and should see
-  // the actual image state, not the upgrade prompt.
   if (!imageEntry) {
     if (upsellReason) {
       return <UpgradePrompt compact={compact} reason={upsellReason} />;
@@ -21,14 +17,11 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
     return null;
   }
   const { url, loading, error } = imageEntry;
-  // Grok Imagine defaults to a square-ish image; match that so it doesn't
-  // get cropped. Slightly smaller max heights to keep cards compact.
-  const aspect = compact ? "aspect-[4/3]" : "aspect-square";
-  const maxHeightClass = compact ? "max-h-[160px]" : "max-h-[200px] md:max-h-[240px]";
+  const aspect = compact ? "aspect-[4/3]" : "aspect-video";
 
   if (loading) {
     return (
-      <div className={`mt-3 rounded-xl overflow-hidden border border-[hsl(216_34%_17%)] bg-[hsl(223_47%_11%)] ${aspect} ${maxHeightClass} flex flex-col items-center justify-center gap-3 relative`}>
+      <div className={`mt-3 rounded-xl overflow-hidden border border-[hsl(216_34%_17%)] bg-[hsl(223_47%_11%)] ${aspect} flex flex-col items-center justify-center gap-3 relative`}>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(210_100%_66%/0.05)] to-transparent animate-pulse" />
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 flex items-center justify-center">
@@ -51,7 +44,7 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
 
   if (error) {
     return (
-      <div className={`mt-3 rounded-xl border border-[hsl(0_63%_31%/0.4)] bg-[hsl(0_63%_31%/0.07)] ${aspect} ${maxHeightClass} flex flex-col items-center justify-center gap-2`}>
+      <div className={`mt-3 rounded-xl border border-[hsl(0_63%_31%/0.4)] bg-[hsl(0_63%_31%/0.07)] ${aspect} flex flex-col items-center justify-center gap-2`}>
         <ImageOff className="w-6 h-6 text-[hsl(0_63%_51%)]" />
         <p className="text-xs text-[hsl(0_63%_61%)]">Image generation failed</p>
       </div>
@@ -59,8 +52,6 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
   }
 
   if (!url) return null;
-
-  const imgMaxH = compact ? "max-h-[140px]" : "max-h-[180px]";
 
   return (
     <div className="mt-3 space-y-1.5">
@@ -74,7 +65,7 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
         <img
           src={url}
           alt={caption ?? "Generated visual"}
-          className={`w-full h-auto object-contain ${imgMaxH}`}
+          className="w-full object-cover"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -84,7 +75,7 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
           </div>
         </div>
       </a>
-      <p className="text-[10px] text-[hsl(215.4_16.3%_36.9%)] italic truncate mt-1.5">
+      <p className="text-[10px] text-[hsl(215.4_16.3%_36.9%)] italic truncate">
         Generated with xAI Grok Imagine
       </p>
     </div>
