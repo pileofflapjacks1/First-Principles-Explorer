@@ -17,11 +17,10 @@ interface BreakdownCardProps {
   defaultOpen?: boolean;
   id: string;
   imageEntry?: ImageEntry;
-  onRegenerateImage?: () => void;
   upsellReason?: "signed-out" | "free-tier" | null;
 }
 
-export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, onRegenerateImage, upsellReason }: BreakdownCardProps) {
+export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, upsellReason }: BreakdownCardProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen ?? item.level === 1);
   const color = LEVEL_COLORS[(item.level - 1) % LEVEL_COLORS.length];
   const links = item.wiki_links ?? [];
@@ -60,7 +59,6 @@ export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, onR
           {item.image_prompt && (
             <ImageBlock
               imageEntry={imageEntry}
-              onRegenerate={onRegenerateImage ?? (() => {})}
               caption={item.title}
               upsellReason={upsellReason ?? null}
             />

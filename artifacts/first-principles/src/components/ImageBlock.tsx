@@ -1,16 +1,15 @@
-import { RefreshCw, ZoomIn, ImageOff } from "lucide-react";
+import { ZoomIn, ImageOff } from "lucide-react";
 import type { ImageEntry } from "../types";
 import { UpgradePrompt } from "./UpgradePrompt";
 
 interface ImageBlockProps {
   imageEntry: ImageEntry | undefined;
-  onRegenerate: () => void;
   caption?: string;
   compact?: boolean;
   upsellReason?: "signed-out" | "free-tier" | null;
 }
 
-export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellReason }: ImageBlockProps) {
+export function ImageBlock({ imageEntry, caption, compact, upsellReason }: ImageBlockProps) {
   // Only show the upsell when no image slot exists for this card. If an
   // imageEntry is present (loading/error/url), the user has already unlocked
   // image generation for this breakdown (Pro or via a credit) and should see
@@ -55,13 +54,6 @@ export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellR
       <div className={`mt-3 rounded-xl border border-[hsl(0_63%_31%/0.4)] bg-[hsl(0_63%_31%/0.07)] ${aspect} ${maxHeightClass} flex flex-col items-center justify-center gap-2`}>
         <ImageOff className="w-6 h-6 text-[hsl(0_63%_51%)]" />
         <p className="text-xs text-[hsl(0_63%_61%)]">Image generation failed</p>
-        <button
-          onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(216_34%_17%)] hover:bg-[hsl(216_34%_22%)] text-xs text-[hsl(213_31%_91%)] transition-colors"
-        >
-          <RefreshCw className="w-3 h-3" />
-          Retry
-        </button>
       </div>
     );
   }
@@ -90,18 +82,9 @@ export function ImageBlock({ imageEntry, onRegenerate, caption, compact, upsellR
           </div>
         </div>
       </a>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] text-[hsl(215.4_16.3%_36.9%)] italic truncate">
-          Generated with xAI Grok Imagine
-        </p>
-        <button
-          onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
-          className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] text-[hsl(215.4_16.3%_46.9%)] hover:text-[hsl(213_31%_91%)] hover:bg-[hsl(216_34%_17%)] transition-colors"
-        >
-          <RefreshCw className="w-2.5 h-2.5" />
-          Regenerate
-        </button>
-      </div>
+      <p className="text-[10px] text-[hsl(215.4_16.3%_36.9%)] italic truncate mt-1.5">
+        Generated with xAI Grok Imagine
+      </p>
     </div>
   );
 }

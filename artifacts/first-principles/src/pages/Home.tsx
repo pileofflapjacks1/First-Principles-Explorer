@@ -299,16 +299,6 @@ export function Home() {
     }
   }
 
-  function handleRegenerateBreakdownImage(level: number, imagePrompt: string) {
-    if (!canGenerateImages) return;
-    void generateOne(breakdownKey(level), imagePrompt, generationRef.current);
-  }
-
-  function handleRegenerateGapImage(index: number, imagePrompt: string) {
-    if (!canGenerateImages) return;
-    void generateOne(gapKey(index), imagePrompt, generationRef.current);
-  }
-
   function handleNodeClick(label: string) {
     if (!result) return;
     const match = result.breakdown.find((b) =>
@@ -843,7 +833,6 @@ export function Home() {
                     isActive={activeCardId === id}
                     defaultOpen={item.level <= 2}
                     imageEntry={images[breakdownKey(item.level)]}
-                    onRegenerateImage={() => handleRegenerateBreakdownImage(item.level, item.image_prompt)}
                     upsellReason={upsellReason}
                   />
                 );
