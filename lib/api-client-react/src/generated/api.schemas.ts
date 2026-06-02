@@ -7,6 +7,15 @@
  */
 export interface HealthStatus {
   status: string;
+  /** AI / xAI service health (circuit breaker state) */
+  ai?: {
+    /** healthy | degraded | open */
+    status: "healthy" | "degraded" | "open";
+    consecutiveTransients?: number;
+    rateLimitCount?: number;
+    otherTransientCount?: number;
+    cooldownRemainingMs?: number;
+  };
 }
 
 export interface Account {
@@ -24,6 +33,8 @@ export interface Account {
   subscriptionStatus?: string | null;
   /** @nullable */
   subscriptionCurrentPeriodEnd?: string | null;
+  /** Tiny AI/xAI health summary from circuit breaker (Pro users) */
+  aiStatus?: "healthy" | "degraded" | "open";
 }
 
 export interface ImageInput {

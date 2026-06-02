@@ -1,12 +1,15 @@
 import { ZoomIn, ImageOff } from "lucide-react";
 import type { ImageEntry } from "../types";
 import { UpgradePrompt } from "./UpgradePrompt";
+import type { AiHealthStatus } from "./AtomSpinner";
 
 interface ImageBlockProps {
   imageEntry: ImageEntry | undefined;
   caption?: string;
   compact?: boolean;
   upsellReason?: "signed-out" | "free-tier" | null;
+  /** Health status passed from parent so image loading UI can be health-aware */
+  healthStatus?: AiHealthStatus;
 }
 
 export function ImageBlock({ imageEntry, caption, compact, upsellReason }: ImageBlockProps) {
@@ -20,33 +23,49 @@ export function ImageBlock({ imageEntry, caption, compact, upsellReason }: Image
   const aspect = compact ? "aspect-[4/3]" : "aspect-video";
 
   if (loading) {
+    const isDegraded = healthStatus === "degraded";
+    const isOpen = healthStatus === "open";
+
+    const imageMessage = isOpen
+      ? "Image generation paused (AI in protection mode)"
+      : isDegraded
+        ? "Generating with Grok Imagine (service under load)…"
+        : "Generating with Grok Imagine…";
+
     return (
       <div className={`mt-3 rounded-xl overflow-hidden border border-[hsl(216_34%_17%)] bg-[hsl(223_47%_11%)] ${aspect} flex flex-col items-center justify-center gap-3 relative`}>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[hsl(210_100%_66%/0.05)] to-transparent animate-pulse" />
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-[hsl(210_100%_66%)] shadow-[0_0_10px_hsl(210_100%_66%/0.9)]" />
+            <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px] transition-colors ${
+              isOpen ? "bg-red-400 shadow-red-400/70" : isDegraded ? "bg-amber-400 shadow-amber-400/70" : "bg-[hsl(210_100%_66%)] shadow-[0_0_10px_hsl(210_100%_66%/0.9)]"
+            }`} />
           </div>
           <div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[hsl(210_100%_66%)]" />
+            <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${isOpen ? "bg-red-400" : isDegraded ? "bg-amber-400" : "bg-[hsl(210_100%_66%)]"}`} />
           </div>
           <div className="absolute inset-0 animate-spin" style={{ animationDuration: "2s", animationDirection: "reverse" }}>
-            <div className="absolute bottom-0 right-2 w-1.5 h-1.5 rounded-full bg-[hsl(280_65%_60%)]" />
+            <div className={`absolute bottom-0 right-2 w-1.5 h-1.5 rounded-full ${isOpen ? "bg-red-400" : isDegraded ? "bg-amber-400" : "bg-[hsl(280_65%_60%)]"}`} />
           </div>
           <div className="absolute inset-0 animate-spin" style={{ animationDuration: "4s" }}>
-            <div className="absolute bottom-1 left-1 w-1.5 h-1.5 rounded-full bg-[hsl(160_60%_55%)]" />
+            <div className={`absolute bottom-1 left-1 w-1.5 h-1.5 rounded-full ${isOpen ? "bg-red-400" : isDegraded ? "bg-amber-400" : "bg-[hsl(160_60%_55%)]"}`} />
           </div>
         </div>
-        <p className="text-xs text-[hsl(215.4_16.3%_46.9%)] relative">Generating with Grok Imagine…</p>
+        <p className={`text-xs relative ${isOpen ? "text-red-400/80" : isDegraded ? "text-amber-400/80" : "text-[hsl(215.4_16.3%_46.9%)]"}`}>
+          {imageMessage}
+        </p>
       </div>
     );
   }
 
   if (error) {
+    const isHealthRelated = healthStatus === "degraded" || healthStatus === "open";
     return (
-      <div className={`mt-3 rounded-xl border border-[hsl(0_63%_31%/0.4)] bg-[hsl(0_63%_31%/0.07)] ${aspect} flex flex-col items-center justify-center gap-2`}>
+      <div className={`mt-3 rounded-xl border ${isHealthRelated ? "border-amber-400/30 bg-amber-900/5" : "border-[hsl(0_63%_31%/0.4)] bg-[hsl(0_63%_31%/0.07)]"} ${aspect} flex flex-col items-center justify-center gap-2`}>
         <ImageOff className="w-6 h-6 text-[hsl(0_63%_51%)]" />
-        <p className="text-xs text-[hsl(0_63%_61%)]">Image generation failed</p>
+        <p className="text-xs text-[hsl(0_63%_61%)]">
+          {isHealthRelated ? "Image generation skipped due to AI load" : "Image generation failed"}
+        </p>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import {
   Atom,
@@ -18,7 +18,7 @@ import {
   useUser,
   UserButton,
 } from "@clerk/react";
-import { getGetMeQueryOptions } from "@workspace/api-client-react";
+import { getGetMeQueryOptions, useHealthCheck } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import type { BreakdownResult, ImageEntry } from "../types";
 import {
@@ -83,7 +83,36 @@ export function Home() {
     enabled: isSignedIn === true,
     retry: false,
   });
+
+  // Public AI health (circuit breaker status) — polled for banner.
+  // Lightweight polling so users see when the service recovers.
+  const { data: healthData } = useHealthCheck({
+    query: {
+      refetchInterval: 45_000, // 45s is a good balance for status
+      retry: 1,
+      staleTime: 30_000,
+    },
+  });
+  const aiHealth = healthData?.ai;
+  const showAiBanner = aiHealth && aiHealth.status !== "healthy";
+  const [aiBannerDismissed, setAiBannerDismissed] = useState(false);
+
+  // Reset dismissal automatically when service recovers (so the next degradation shows the banner again)
+  useEffect(() => {
+    if (aiHealth?.status === "healthy" && aiBannerDismissed) {
+      setAiBannerDismissed(false);
+    }
+  }, [aiHealth?.status, aiBannerDismissed]);
   const isPro = (account?.isPro || account?.isAdmin) ?? false;
+
+  // Effective AI health status — prefer the one from /me for signed-in users (now includes aiStatus),
+  // fall back to the public polled health endpoint. This powers proactive UX protection.
+  const effectiveAiStatus: "healthy" | "degraded" | "open" =
+    (account?.aiStatus as any) ?? healthData?.ai?.status ?? "healthy";
+
+  const aiIsDegraded = effectiveAiStatus !== "healthy";
+  const aiIsOpen = effectiveAiStatus === "open";
+
   const monthlyLimit = account?.monthlyImageLimit ?? 0;
   const monthlyUsed = account?.imagesGeneratedThisMonth ?? 0;
   const topicCredits = account?.topicCredits ?? 0;
@@ -101,6 +130,10 @@ export function Home() {
   // Pro users always get images. Non-Pro users only get images when they
   // spend a paid credit on the breakdown (free monthly breakdowns are text-only).
   const canGenerateImages = isPro || usedCreditBreakdown;
+
+  // Separate signal for whether we should attempt image generation right now
+  // (respects the circuit breaker without changing quota logic).
+  const imagesAllowedByHealth = !aiIsOpen;
 
   function setImageEntry(key: string, patch: Partial<ImageEntry>) {
     setImages((prev) => ({
@@ -130,6 +163,23 @@ export function Home() {
 
   async function generateAllImages(data: BreakdownResult, overrideCanGenerate = false) {
     if (!canGenerateImages && !overrideCanGenerate) return;
+
+    // When the AI circuit is open, we still allow the breakdown text (it's already paid for),
+    // but we strongly deprioritize / warn on the expensive image generation step.
+    if (aiIsOpen) {
+      // We still set the placeholders so the UI shows the state, but we skip network calls.
+      // This protects both the user (no wasted slots) and the backend.
+      const initial: Record<string, ImageEntry> = {};
+      data.breakdown.forEach((b) => {
+        if (b.image_prompt) initial[breakdownKey(b.level)] = { url: null, loading: false, error: true };
+      });
+      data.gaps.forEach((g, i) => {
+        if (g.image_prompt) initial[gapKey(i)] = { url: null, loading: false, error: true };
+      });
+      setImages(initial);
+      return;
+    }
+
     const genId = ++generationRef.current;
     // Capture token at the time generation starts so the closure is stable.
     const sessionToken = creditSessionRef.current;
@@ -218,8 +268,8 @@ export function Home() {
         }
       }
       setResult(data);
-      // Pass true to bypass the stale canGenerateImages state — it hasn't
-      // re-rendered yet after setUsedCreditBreakdown(true) above.
+      // Pass true to bypass the stale canGenerateImages state.
+      // We still respect imagesAllowedByHealth inside generateAllImages.
       void generateAllImages(data, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -236,6 +286,16 @@ export function Home() {
     // hitting the server and getting a generic 402.
     if (userLoaded && !isSignedIn) {
       setShowSignedOutPrompt(true);
+      return;
+    }
+
+    // When the circuit breaker is open, give Pro users a clear heads-up before
+    // they spend quota or trigger expensive image work.
+    if (aiIsOpen && isPro) {
+      setError(
+        "AI service is currently in protection mode after rate limits. " +
+        "Please wait a minute or two before starting a new breakdown (images will be delayed)."
+      );
       return;
     }
 
@@ -284,7 +344,7 @@ export function Home() {
         Object.keys(next).forEach((k) => { if (k.startsWith("gap-")) delete next[k]; });
         return next;
       });
-      if (canGenerateImages) {
+      if (canGenerateImages && imagesAllowedByHealth) {
         const genId = generationRef.current;
         gaps.forEach((g, i) => {
           if (g.image_prompt) {
@@ -341,7 +401,7 @@ export function Home() {
     setError(null);
     setImages({});
     generationRef.current++;
-    if (canGenerateImages) {
+    if (canGenerateImages && imagesAllowedByHealth) {
       void generateAllImages(TRANSISTOR_EXAMPLE);
     }
   }
@@ -434,6 +494,40 @@ export function Home() {
           </div>
         </div>
       </nav>
+
+      {/* AI Service Health Banner — driven by the circuit breaker (aiStatus from /me + public /healthz) */}
+      {showAiBanner && !aiBannerDismissed && (
+        <div className="border-b border-[hsl(216_34%_17%)] bg-[hsl(224_71%_6%)]">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2 text-[hsl(215.4_16.3%_78%)]">
+              <span
+                className={
+                  effectiveAiStatus === "open"
+                    ? "inline-block w-2 h-2 rounded-full bg-red-400"
+                    : "inline-block w-2 h-2 rounded-full bg-amber-400"
+                }
+              />
+              <span>
+                {effectiveAiStatus === "open"
+                  ? "AI service is in protection mode after rate limits."
+                  : "AI service is under elevated load — responses may be slower."}
+              </span>
+              {healthData?.ai?.cooldownRemainingMs && healthData.ai.cooldownRemainingMs > 5000 && (
+                <span className="text-[hsl(215.4_16.3%_56%)] text-xs">
+                  (recovers in ~{Math.ceil(healthData.ai.cooldownRemainingMs / 1000)}s)
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setAiBannerDismissed(true)}
+              className="text-[hsl(215.4_16.3%_56.9%)] hover:text-[hsl(213_31%_91%)] text-xs px-2 py-0.5 rounded transition-colors"
+              aria-label="Dismiss AI status banner"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero / Input */}
       {!hasResult && !loading && (
@@ -633,10 +727,19 @@ export function Home() {
         </div>
       )}
 
-      {/* Loading */}
+      {/* Loading — now deeply influenced by AI health state */}
       {loading && (
         <div className="max-w-2xl mx-auto px-4">
-          <AtomSpinner message={`Breaking down "${prompt}" from first principles...`} />
+          <AtomSpinner
+            message={
+              effectiveAiStatus === "open"
+                ? `Waiting for AI capacity to break down "${prompt}"...`
+                : effectiveAiStatus === "degraded"
+                  ? `Breaking down "${prompt}" (service under load)...`
+                  : `Breaking down "${prompt}" from first principles...`
+            }
+            healthStatus={effectiveAiStatus}
+          />
         </div>
       )}
 
@@ -694,6 +797,13 @@ export function Home() {
                   </Link>
                 )}
               </div>
+
+              {/* AI Health status note for Pro users when the circuit breaker is active */}
+              {isPro && aiIsDegraded && (
+                <div className="mt-1 text-[10px] text-amber-400/80">
+                  AI service is {effectiveAiStatus}. Image generation is paused until it recovers.
+                </div>
+              )}
             </div>
             <div className="shrink-0 flex items-center gap-2">
               <div className="flex items-center gap-2 bg-[hsl(224_71%_7%)] border border-[hsl(216_34%_17%)] rounded-xl px-3 py-2">
@@ -834,6 +944,7 @@ export function Home() {
                     defaultOpen={item.level <= 2}
                     imageEntry={images[breakdownKey(item.level)]}
                     upsellReason={upsellReason}
+                    healthStatus={effectiveAiStatus}
                   />
                 );
               })}
@@ -852,11 +963,17 @@ export function Home() {
               {isPro && (
                 <button
                   onClick={handleRegenerateGaps}
-                  disabled={loadingGaps}
+                  disabled={loadingGaps || effectiveAiStatus === "open"}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] hover:bg-[hsl(216_34%_17%)] text-xs text-[hsl(215.4_16.3%_66.9%)] transition-colors disabled:opacity-50"
+                  title={effectiveAiStatus === "open" ? "AI service is in protection mode" : undefined}
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loadingGaps ? "animate-spin" : ""}`} />
                   Regenerate Gaps
+                  {effectiveAiStatus !== "healthy" && (
+                    <span className={`ml-1 text-[10px] ${effectiveAiStatus === "open" ? "text-red-400" : "text-amber-400"}`}>
+                      {effectiveAiStatus}
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -879,8 +996,12 @@ export function Home() {
             ) : loadingGaps ? (
               <div className="flex items-center justify-center py-8">
                 <div className="flex items-center gap-2 text-[hsl(215.4_16.3%_56.9%)] text-sm">
-                  <div className="w-4 h-4 border-2 border-[hsl(210_100%_66%)] border-t-transparent rounded-full animate-spin" />
-                  Finding new innovation gaps...
+                  <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${effectiveAiStatus !== "healthy" ? "border-amber-400" : "border-[hsl(210_100%_66%)]"}`} />
+                  {effectiveAiStatus === "open"
+                    ? "AI service in protection mode — gap regeneration paused"
+                    : effectiveAiStatus === "degraded"
+                      ? "Finding new innovation gaps (under load)..."
+                      : "Finding new innovation gaps..."}
                 </div>
               </div>
             ) : (

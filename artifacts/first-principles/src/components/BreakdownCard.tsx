@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, BookOpen, ExternalLink } from "lucide-react";
 import type { BreakdownLevel, ImageEntry } from "../types";
 import { ImageBlock } from "./ImageBlock";
+import type { AiHealthStatus } from "./AtomSpinner";
 
 const LEVEL_COLORS = [
   { badge: "bg-[hsl(280_65%_60%/0.15)] text-[hsl(280_65%_75%)] border-[hsl(280_65%_60%/0.3)]", dot: "bg-[hsl(280_65%_60%)]", wiki: "text-[hsl(280_65%_70%)] hover:text-[hsl(280_65%_85%)] border-[hsl(280_65%_60%/0.25)] hover:border-[hsl(280_65%_60%/0.5)] hover:bg-[hsl(280_65%_60%/0.08)]" },
@@ -18,6 +19,7 @@ interface BreakdownCardProps {
   id: string;
   imageEntry?: ImageEntry;
   upsellReason?: "signed-out" | "free-tier" | null;
+  healthStatus?: AiHealthStatus;
 }
 
 export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, upsellReason }: BreakdownCardProps) {
@@ -61,6 +63,7 @@ export function BreakdownCard({ item, isActive, defaultOpen, id, imageEntry, ups
               imageEntry={imageEntry}
               caption={item.title}
               upsellReason={upsellReason ?? null}
+              healthStatus={healthStatus}
             />
           )}
 

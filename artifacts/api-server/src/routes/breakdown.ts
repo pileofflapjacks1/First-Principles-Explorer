@@ -10,6 +10,8 @@ import { optionalAuth, requireAuth } from "../middlewares/auth";
 import {
   generateBreakdownWithXai,
   regenerateGapsWithXai,
+  XaiError,
+  getXaiHealth,
 } from "../lib/xai-text";
 import { FREE_BREAKDOWNS_PER_MONTH } from "../lib/usage";
 
@@ -142,12 +144,31 @@ router.post("/breakdown", optionalAuth, async (req, res): Promise<void> => {
     }
     res.json({ ...data, creditSessionToken, usedFreeBreakdown: useFreeBreakdown, usedCredit: useCredit });
   } catch (err) {
-    req.log.error({ err }, "xAI breakdown failed");
+    const isXai = err instanceof XaiError;
+    const xaiMeta = isXai ? { type: err.type, status: err.status, retried: err.retried } : {};
+    const circuit = getXaiHealth();
+    req.log.error({ err, xai: xaiMeta, circuit }, "xAI breakdown failed");
+
     // Refund the reserved quota so a transient API error doesn't cost the user.
     await refundQuota();
-    res
-      .status(502)
-      .json({ error: "Breakdown generation failed. Please try again." });
+
+    // Smarter user-facing message based on error metadata
+    let userMessage = "Breakdown generation failed. Please try again.";
+    if (isXai) {
+      if (err.type === "CircuitOpen") {
+        userMessage = "AI service is temporarily degraded after repeated issues. Please try again in a minute.";
+      } else if (err.type === "RateLimit") {
+        userMessage = "xAI is currently rate-limited. Please wait 30–60 seconds and try again.";
+      } else if (err.type === "Timeout") {
+        userMessage = "The request to xAI timed out. Please try again in a moment.";
+      } else if (err.retried) {
+        userMessage = "Temporary issue with AI service after retries. Please try again shortly.";
+      }
+    }
+
+    // Use 503 when the circuit is explicitly open (clear signal of upstream protection)
+    const statusCode = isXai && err.type === "CircuitOpen" ? 503 : 502;
+    res.status(statusCode).json({ error: userMessage });
   }
 });
 
@@ -189,10 +210,24 @@ router.post(
       );
       res.json({ gaps });
     } catch (err) {
-      req.log.error({ err }, "xAI gaps regeneration failed");
-      res
-        .status(502)
-        .json({ error: "Gap regeneration failed. Please try again." });
+      const isXai = err instanceof XaiError;
+      const xaiMeta = isXai ? { type: err.type, status: err.status, retried: err.retried } : {};
+      const circuit = getXaiHealth();
+      req.log.error({ err, xai: xaiMeta, circuit }, "xAI gaps regeneration failed");
+
+      let userMessage = "Gap regeneration failed. Please try again.";
+      if (isXai) {
+        if (err.type === "CircuitOpen") {
+          userMessage = "AI service degraded (circuit open). Try gap regeneration again shortly.";
+        } else if (err.type === "RateLimit") {
+          userMessage = "xAI is rate-limited. Wait a bit and retry gap regeneration.";
+        } else if (err.retried) {
+          userMessage = "Temporary AI service issue (retried). Please try again.";
+        }
+      }
+
+      const statusCode = isXai && err.type === "CircuitOpen" ? 503 : 502;
+      res.status(statusCode).json({ error: userMessage });
     }
   },
 );

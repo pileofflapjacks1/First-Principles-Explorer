@@ -13,6 +13,15 @@ import * as zod from "zod";
  */
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
+  ai: zod
+    .object({
+      status: zod.enum(["healthy", "degraded", "open"]),
+      consecutiveTransients: zod.number().optional(),
+      rateLimitCount: zod.number().optional(),
+      otherTransientCount: zod.number().optional(),
+      cooldownRemainingMs: zod.number().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -30,6 +39,7 @@ export const GetMeResponse = zod.object({
   freeBreakdownsPerMonth: zod.number(),
   subscriptionStatus: zod.string().nullish(),
   subscriptionCurrentPeriodEnd: zod.coerce.date().nullish(),
+  aiStatus: zod.enum(["healthy", "degraded", "open"]).optional(),
 });
 
 /**

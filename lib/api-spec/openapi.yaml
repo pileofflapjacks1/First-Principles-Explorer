@@ -248,6 +248,23 @@ components:
       properties:
         status:
           type: string
+          description: Basic liveness status
+        ai:
+          type: object
+          description: AI / xAI service health (circuit breaker state for smarter client behavior)
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, open]
+              description: healthy = normal, degraded = elevated transients, open = circuit breaker active (fast-fail in effect)
+            consecutiveTransients:
+              type: integer
+              description: Number of consecutive transient failures (RateLimit/Timeout/etc.)
+            cooldownRemainingMs:
+              type: integer
+              description: Milliseconds until circuit closes (0 when healthy or degraded)
+          required:
+            - status
       required:
         - status
     Account:
@@ -285,6 +302,10 @@ components:
         subscriptionCurrentPeriodEnd:
           type: ["string", "null"]
           format: date-time
+        aiStatus:
+          type: string
+          enum: [healthy, degraded, open]
+          description: Tiny summary of xAI service health from the circuit breaker (for Pro users who already fetch /me)
     ImageInput:
       type: object
       required: [prompt]

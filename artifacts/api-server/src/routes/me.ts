@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { GetMeResponse } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
+import { getXaiHealth } from "../lib/xai-text";
 import {
   getMonthlyLimit,
   isStaleResetWindow,
@@ -17,6 +18,10 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
     .select()
     .from(usersTable)
     .where(eq(usersTable.id, userId));
+
+  // Tiny AI status summary for Pro users (who already call /me).
+  // Uses the same circuit breaker state as /healthz.
+  const aiStatus = getXaiHealth().status;
 
   // Reset stale monthly counters inline so the response reflects the real value
   let imageCount = user?.imageCount ?? 0;
@@ -53,6 +58,7 @@ router.get("/me", requireAuth, async (req, res): Promise<void> => {
       freeBreakdownsPerMonth: FREE_BREAKDOWNS_PER_MONTH,
       subscriptionStatus: user?.subscriptionStatus ?? null,
       subscriptionCurrentPeriodEnd: user?.subscriptionCurrentPeriodEnd?.toISOString() ?? null,
+      aiStatus,
     }),
   );
 });

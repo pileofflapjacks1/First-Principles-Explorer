@@ -57,6 +57,19 @@ _(none yet)_
 - The Clerk frontend-API proxy middleware (`/api/__clerk`) is a no-op in dev; only active in production.
 - To grant a user Pro manually (e.g. comp): `UPDATE users SET is_pro = true WHERE id = '<clerk_user_id>';` — note the next Stripe webhook for that customer will overwrite this if the subscription is inactive.
 - The Stripe webhook route is mounted in `app.ts` BEFORE `express.json()` because Stripe signature verification needs the raw body.
+- **xAI calls are now resilient + circuit-aware** (see `lib/xai-text.ts` + `lib/xai.ts`): automatic retries (2–3 attempts, de-weighted to 1 when degraded) + per-call timeouts (shortened under load) + exp backoff + jitter. A **strengthened in-memory circuit breaker** now uses *separate counters* for RateLimit vs other transients (RateLimit threshold = 3, other = 5). De-weighting is smarter when RateLimit-heavy. Richer health data (`rateLimitCount`, `otherTransientCount`, `totalRecentTransients`) is exposed via `getXaiHealth()`, `/healthz`, and `/me`. Time-based decay still applies. Routes return 503 on open circuit. Direct analog of the previous HybridOrchestrator adaptive logic.
+- The public `/healthz` endpoint now surfaces the AI health (`ai.status`, `ai.cooldownRemainingMs`, etc.) so the frontend can show a non-blocking banner (see `Home.tsx`). The React client already had the generated `useHealthCheck` hook — it is now actively used with 45s polling.
+- For authenticated users (especially Pro), a tiny `aiStatus` string ("healthy" | "degraded" | "open") is also included in the existing `/me` response. This is the same circuit breaker value and requires zero extra calls from the client.
+- Frontend now actively reacts: `handleSubmit` blocks new breakdowns when open for Pro users, image generation is skipped (with clear messaging), and the banner + result headers reflect the live state. Added time-based decay to the circuit counter for better long-term behavior.
+- Health state now deeply influences loading experiences: AtomSpinner, ImageBlock loading states, and gap regeneration UI all adapt messaging, colors, and disabled states based on `effectiveAiStatus`.
+- Added lightweight debug endpoint: `GET /api/debug/ai-circuit`.
+  - Returns rich JSON for tools/cURL (full state + counts + thresholds).
+  - When opened in a browser, serves a beautiful self-contained interactive dashboard (Tailwind + vanilla JS) with:
+    - Live status + countdown timer
+    - Visual progress bars for RateLimit vs Other counters
+    - One-click buttons: Reset, Simulate RateLimit, Simulate Other
+    - Auto-polling + action log + keyboard shortcuts (R, 1, 2)
+  - Perfect for live demos and presentations. POST helpers (`/reset` and `/simulate-failure`) are called directly from the UI.
 
 ## Pointers
 

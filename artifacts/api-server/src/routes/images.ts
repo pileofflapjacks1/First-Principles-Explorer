@@ -7,6 +7,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth } from "../middlewares/auth";
 import { generateImageWithXai } from "../lib/xai";
+import { XaiError, getXaiHealth } from "../lib/xai-text";
 import {
   PRO_MONTHLY_IMAGE_LIMIT,
   isStaleResetWindow,
@@ -44,8 +45,17 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
       const url = await generateImageWithXai(parsed.data.prompt, xaiKey);
       res.json(GenerateProImageResponse.parse({ url, imagesGeneratedThisMonth: 0 }));
     } catch (err) {
-      req.log.error({ err }, "xAI image generation failed");
-      res.status(502).json({ error: "Image generation failed. Please try again." });
+      const isXai = err instanceof XaiError;
+      const xaiMeta = isXai ? { type: err.type, status: err.status, retried: err.retried } : {};
+      const circuit = getXaiHealth();
+      req.log.error({ err, xai: xaiMeta, circuit }, "xAI image generation failed");
+      let msg = "Image generation failed. Please try again.";
+      if (isXai) {
+        if (err.type === "CircuitOpen") msg = "AI images temporarily degraded. Try again in ~1 minute.";
+        else if (err.type === "RateLimit") msg = "xAI rate limit on images. Please wait and retry.";
+      }
+      const statusCode = isXai && err.type === "CircuitOpen" ? 503 : 502;
+      res.status(statusCode).json({ error: msg });
     }
     return;
   }
@@ -100,13 +110,22 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
         }),
       );
     } catch (err) {
-      req.log.error({ err }, "xAI image generation failed");
+      const isXai = err instanceof XaiError;
+      const xaiMeta = isXai ? { type: err.type, status: err.status, retried: err.retried } : {};
+      const circuit = getXaiHealth();
+      req.log.error({ err, xai: xaiMeta, circuit }, "xAI image generation failed");
       // Refund the slot so the user can retry without losing a breakdown image.
       await db
         .update(creditBreakdownSessionsTable)
         .set({ imagesRemaining: sql`images_remaining + 1` })
         .where(eq(creditBreakdownSessionsTable.id, sessionId));
-      res.status(502).json({ error: "Image generation failed. Please try again." });
+      let msg = "Image generation failed. Please try again.";
+      if (isXai) {
+        if (err.type === "CircuitOpen") msg = "AI images temporarily degraded (circuit open). Retry shortly.";
+        else if (err.type === "RateLimit") msg = "xAI image rate limit. Please wait and retry.";
+      }
+      const statusCode = isXai && err.type === "CircuitOpen" ? 503 : 502;
+      res.status(statusCode).json({ error: msg });
     }
     return;
   }
@@ -153,10 +172,17 @@ router.post("/images", requireAuth, async (req, res): Promise<void> => {
       }),
     );
   } catch (err) {
-    req.log.error({ err }, "xAI image generation failed");
-    res
-      .status(502)
-      .json({ error: "Image generation failed. Please try again." });
+    const isXai = err instanceof XaiError;
+    const xaiMeta = isXai ? { type: err.type, status: err.status, retried: err.retried } : {};
+    const circuit = getXaiHealth();
+    req.log.error({ err, xai: xaiMeta, circuit }, "xAI image generation failed");
+    let msg = "Image generation failed. Please try again.";
+    if (isXai) {
+      if (err.type === "CircuitOpen") msg = "AI images temporarily degraded. Please wait ~1 minute.";
+      else if (err.type === "RateLimit") msg = "xAI image rate limit. Please wait a minute and retry.";
+    }
+    const statusCode = isXai && err.type === "CircuitOpen" ? 503 : 502;
+    res.status(statusCode).json({ error: msg });
   }
 });
 
