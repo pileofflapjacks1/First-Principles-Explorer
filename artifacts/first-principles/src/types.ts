@@ -40,4 +40,33 @@ export interface BreakdownResult {
   mermaid_flowchart: string;
   gap_nodes: string[];
   gaps: Gap[];
+  // Optional 3D scene data for the Component Explorer (procedural or manifest)
+  three_d?: ThreeDScene;
+}
+
+export interface ThreeDPart {
+  id: string;
+  label: string;
+  level?: number;
+  component?: string;
+  primitive: 'box' | 'cylinder' | 'sphere' | 'cone' | 'group';
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: [number, number, number];
+  color?: string;
+  children?: string[];
+  explodeWeight?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ThreeDScene {
+  rootLabel: string;
+  parts: ThreeDPart[];
+  cameraPresets?: Array<{
+    name: string;
+    position: [number, number, number];
+    target: [number, number, number];
+  }>;
+  upAxis?: 'y' | 'z';
+  suggestedExplodeAxis?: [number, number, number];
 }

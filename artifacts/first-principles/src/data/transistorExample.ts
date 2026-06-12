@@ -107,6 +107,35 @@ export const TRANSISTOR_EXAMPLE = {
     F --> G[Channel\nSwitching]
     G --> H[Transistor\nOperation]`,
   gap_nodes: ["A", "C", "F", "G", "H"],
+  // Hand-authored procedural 3D scene for the Component Explorer demo.
+  // Hierarchical groups mirror breakdown levels. Uses better primitives than basic boxes.
+  // Click handlers and explode are wired in ThreeExplorer.
+  three_d: {
+    rootLabel: "MOSFET Transistor",
+    parts: [
+      // Level 1-2: Base silicon substrate (foundation)
+      { id: "substrate", label: "Silicon Substrate", level: 2, primitive: "box", position: [0, -1.5, 0], scale: [4, 0.8, 4], color: "#4a5568", explodeWeight: 0.1 },
+      // Level 3-4: Doped regions (N/P)
+      { id: "n-regions", label: "N-type Regions", level: 4, primitive: "box", position: [-1.2, -0.8, 0], scale: [1.2, 0.6, 2.5], color: "#3b82f6", explodeWeight: 0.3 },
+      { id: "p-region", label: "P-type Channel Region", level: 4, primitive: "box", position: [0, -0.8, 0], scale: [1.5, 0.6, 2.5], color: "#ef4444", explodeWeight: 0.3 },
+      // Level 5: P-N Junction / Depletion (critical interface)
+      { id: "pn-junction", label: "P-N Junction + Depletion", level: 5, primitive: "box", position: [0, -0.4, 0], scale: [3.5, 0.3, 2.8], color: "#f59e0b", explodeWeight: 0.5 },
+      // Level 6: Gate stack (oxide + electrode)
+      { id: "gate-oxide", label: "Gate Oxide (SiO2)", level: 6, primitive: "box", position: [0, 0.2, 0], scale: [2.8, 0.15, 2.2], color: "#a1a1aa", explodeWeight: 0.6 },
+      { id: "gate-electrode", label: "Gate Electrode", level: 6, primitive: "box", position: [0, 0.6, 0], scale: [2.5, 0.4, 2], color: "#71717a", explodeWeight: 0.7 },
+      // Level 7-8: Source/Drain + overall operation
+      { id: "source-drain", label: "Source & Drain Terminals", level: 7, primitive: "cylinder", position: [-1.8, 0.1, 0], scale: [0.6, 1.2, 0.6], color: "#22c55e", explodeWeight: 0.8 },
+      { id: "source-drain-2", label: "Source & Drain Terminals", level: 7, primitive: "cylinder", position: [1.8, 0.1, 0], scale: [0.6, 1.2, 0.6], color: "#22c55e", explodeWeight: 0.8 },
+      // Top level: Full device as group for overview
+      { id: "full-device", label: "Complete MOSFET Device", level: 8, primitive: "group", position: [0, 0, 0], children: ["substrate", "n-regions", "p-region", "pn-junction", "gate-oxide", "gate-electrode", "source-drain", "source-drain-2"], explodeWeight: 0.2 }
+    ],
+    cameraPresets: [
+      { name: "Overview", position: [0, 4, 12], target: [0, 0, 0] },
+      { name: "Gate Stack", position: [0, 3, 4], target: [0, 0.3, 0] },
+      { name: "Channel View", position: [6, 0, 0], target: [0, -0.5, 0] }
+    ],
+    suggestedExplodeAxis: [0, 1, 0]
+  },
   gaps: [
     {
       gap_title: "Sub-1nm Gate Oxide Leakage",

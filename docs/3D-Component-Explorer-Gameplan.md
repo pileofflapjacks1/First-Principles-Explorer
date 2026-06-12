@@ -310,11 +310,12 @@ Update copy in `Pricing.tsx` and the navbar quota badges.
 |------|------------|
 | LLM produces unusable scene data (bad positions, too many parts, invented components) | Strong prompt constraints + robust client-side builder with sensible defaults and validation. Fall back to a simple stacked "levels" visualization. |
 | Bundle size explosion | Strict lazy loading + tree-shaking. Measure in Phase 0. Consider `three` subset builds if needed. |
-| Poor performance on low-end devices / Replit previews | Limit part count in prompt. Add a "Quality" toggle (low poly). Detect WebGL2 / device pixel ratio. |
+| Poor performance on low-end devices / Replit previews | Limit part count in prompt. Add a "Quality" toggle (low poly). Detect WebGL2 / device pixel ratio. Replit autoscale is client-side so 3D runs in user's browser (fine), but preview GPU is limited - test there, use low-poly defaults. |
 | WebGL not available or blocked | Beautiful fallback using existing images + a textual "spatial hierarchy" view. |
 | User confusion ("why does my datacenter look like Lego?") | Clear labeling + "This is a schematic 3D representation derived from the first-principles breakdown" microcopy. Offer "Generate higher-fidelity render" (future). |
 | Sync between 3D / Mermaid / cards gets out of sync | Centralize selection state in Home.tsx (or a small context/zustand slice). Make the mapping functions pure and well-tested. |
 | Accessibility / legal (some users can't use 3D) | First-class keyboard + list-based navigation of the same data. Never make 3D the only way to consume the content. |
+| Replit-specific deployment (autoscale, asset hosting, pnpm linux-only) | 3D is 100% client-side (no server render needed). For GLB models (e.g. real Starship), host in Replit Object Storage or public bucket and load by URL in drei useGLTF. pnpm overrides in workspace strip darwin (Replit=linux); for your local Mac dev, temporarily comment darwin strips or use --ignore-scripts. Test full flow in Replit preview before deploy. Add "Replit note" in UI for GLB hosting. |
 
 ---
 

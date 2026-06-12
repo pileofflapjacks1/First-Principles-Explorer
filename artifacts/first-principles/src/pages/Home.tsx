@@ -33,6 +33,8 @@ import { MermaidChart } from "../components/MermaidChart";
 import { GapCard } from "../components/GapCard";
 import { UpgradePrompt } from "../components/UpgradePrompt";
 import { SubscriptionTab } from "../components/SubscriptionTab";
+import { lazy, Suspense } from "react";
+const ThreeExplorer = lazy(() => import("../components/ThreeExplorer")); // Lazy loaded for bundle size - critical on Replit autoscale and previews
 
 const EXAMPLE_PROMPTS = [
   "How does a transistor work",
@@ -923,6 +925,37 @@ export function Home() {
                   Innovation gap
                 </span>
                 <span>· Click a node to jump to its breakdown</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive 3D Component Explorer - highest impact upgrade from simple shapes */}
+          {/* Uses the three_d data (or builds procedurally from breakdown levels/components).
+               For "legit" objects like a Starship: load a high-quality GLB base model + LLM-generated component manifest
+               for accurate mapping to first-principles levels (see ThreeExplorer.tsx and gameplan for details). */}
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-[hsl(215.4_16.3%_66.9%)] uppercase tracking-wide mb-3">
+              Interactive 3D Component Explorer
+            </h3>
+            <div className="rounded-xl border border-[hsl(216_34%_17%)] bg-[hsl(224_71%_7%)] p-4">
+              <Suspense fallback={<div className="h-[420px] flex items-center justify-center text-sm text-white/50">Loading 3D explorer...</div>}>
+                <ThreeExplorer 
+                  result={result} 
+                  activeCardId={activeCardId} 
+                  onPartSelect={(level, component) => {
+                    if (level) {
+                      const key = `level-${level}`;
+                      setActiveCardId(key);
+                      const el = document.getElementById(key);
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                />
+              </Suspense>
+              <div className="mt-2 text-[10px] text-white/40">
+                Click parts to highlight matching breakdown cards. Drag to rotate. Use the slider to explode the hierarchy.
+                For complex physical systems (e.g. "How is a SpaceX Starship built"), the procedural builder can be replaced with a curated GLB + semantic component manifest for recognizable real geometry while preserving exact first-principles mapping.
+                <br />Replit note: 3D is client-side; test in Replit preview (WebGL available), lazy-loaded to keep deploys light. For GLBs, host in Replit Object Storage or public bucket and reference by URL.
               </div>
             </div>
           </div>
